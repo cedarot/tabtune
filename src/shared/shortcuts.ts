@@ -1,7 +1,7 @@
 import type { Action } from './types';
 
 export const shortcutActions: Action[] = [
-  'play', 'pause', 'next-track', 'previous-track',
+  'previous-track', 'next-track',
   'volume-up', 'volume-down', 'seek-forward', 'seek-backward'
 ];
 

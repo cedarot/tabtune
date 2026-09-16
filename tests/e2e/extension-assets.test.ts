@@ -12,7 +12,10 @@ describe('built extension contract', () => {
       expect.objectContaining({ js: ['content/index.js'], run_at: 'document_start' })
     ]));
     expect(readFileSync(`dist/${manifest.background.service_worker}`, 'utf8')).not.toMatch(/^import\s/m);
-    for (const name of ['play', 'pause', 'next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward']) expect(manifest.commands[name]?.global).toBe(true);
+    for (const name of ['next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward']) expect(manifest.commands[name]?.global).toBe(true);
+    expect(manifest.commands.play).toBeUndefined();
+    expect(manifest.commands.pause).toBeUndefined();
+    expect(Object.keys(manifest.commands)).toEqual(['previous-track', 'next-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward']);
     expect(manifest.icons).toEqual(expect.objectContaining({ '16': 'icons/icon16.png', '32': 'icons/icon32.png', '48': 'icons/icon48.png', '128': 'icons/icon128.png' }));
     for (const path of Object.values(manifest.icons ?? {})) expect(existsSync(`dist/${path}`)).toBe(true);
   });

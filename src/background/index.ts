@@ -198,6 +198,6 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
 
 chrome.commands.onCommand.addListener((name) => {
   const action = name as Action;
-  if (!['play', 'pause', 'next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward'].includes(action)) return;
+  if (!['next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward'].includes(action)) return;
   void queue({ type: 'COMMAND', requestId: createId('command'), action }).catch((error: unknown) => { lastError = error instanceof Error ? error.message : 'Media control failed'; });
 });
