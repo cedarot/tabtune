@@ -27,7 +27,7 @@ const first = (selectors: string[]): HTMLElement | undefined => {
 function clickNext(direction: 'next' | 'previous'): void {
   const selectors = direction === 'next' ? nextSelectors : previousSelectors;
   const control = first(selectors);
-  if (!control) throw new Error(direction === 'next' ? '不存在下一项' : '不存在上一项');
+  if (!control) throw new Error(direction === 'next' ? 'No next track control found' : 'No previous track control found');
   control.click();
 }
 
@@ -40,7 +40,7 @@ export function siteAdapter(): Adapter {
     async execute(action, _amount) {
       if (action === 'next-track') { clickNext('next'); return { state: {} }; }
       if (action === 'previous-track') { clickNext('previous'); return { state: {} }; }
-      return { state: {}, message: '站点控制回退到通用播放器' };
+      return { state: {}, message: 'Site control fell back to the generic player' };
     }
   };
 }

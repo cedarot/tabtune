@@ -49,13 +49,13 @@ async function inject(tab: chrome.tabs.Tab): Promise<boolean> {
 
 function placeholderFor(tab: chrome.tabs.Tab): Candidate | undefined {
   if (tab.id === undefined || !tab.audible) return undefined;
-  let hostname = '网页';
+  let hostname = 'Web page';
   try { hostname = new URL(tab.url ?? '').hostname || hostname; } catch { /* restricted tab */ }
   return {
-    tabId: tab.id, frameId: 0, mediaId: `tab-${tab.id}`, title: tab.title || '正在发声的标签页', hostname,
+    tabId: tab.id, frameId: 0, mediaId: `tab-${tab.id}`, title: tab.title || 'Audible media tab', hostname,
     audible: true, paused: false, muted: Boolean(tab.mutedInfo?.muted), volume: 0, duration: 0, currentTime: 0,
     seekable: false, capabilities: [], controllable: false, lastInteractionAt: tab.lastAccessed ?? 0, updatedAt: Date.now(),
-    error: '需要授权才能控制此网页'
+    error: 'Permission is required to control this page'
   };
 }
 
@@ -112,23 +112,23 @@ async function execute(request: CommandRequest): Promise<CommandResult> {
     await refreshTabs().catch(() => undefined);
     target = targetFor(request);
   }
-  if (!target) return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'target-gone', message: '没有可控制的媒体' };
+  if (!target) return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'target-gone', message: 'No controllable media found' };
   const candidate = targetCandidate(store, target);
-  if (!candidate) return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'target-gone', message: '目标标签页已失效' };
+  if (!candidate) return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'target-gone', message: 'The target tab is no longer available' };
   const tab = await chrome.tabs.get(target.tabId).catch(() => undefined);
-  if (!tab) { removeTab(store, target.tabId); return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'target-gone', message: '目标标签页已关闭' }; }
+  if (!tab) { removeTab(store, target.tabId); return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'target-gone', message: 'The target tab was closed' }; }
   const message = { ...request, target };
   try {
     const result = await chrome.tabs.sendMessage<CommandRequest, CommandResult>(target.tabId, message, { frameId: target.frameId });
     if (result?.status === 'ok') { store.target = target; await saveTarget(); }
-    return result ?? { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'failed', message: '播放器没有返回结果' };
+    return result ?? { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'failed', message: 'The media player returned no result' };
   } catch {
     const injected = await inject(tab);
-    if (!injected) return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'permission-required', message: '请先授予此网站的访问权限' };
+    if (!injected) return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'permission-required', message: 'Grant webpage access before controlling this site' };
     try {
       const result = await chrome.tabs.sendMessage<CommandRequest, CommandResult>(target.tabId, message, { frameId: target.frameId });
-      return result ?? { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'failed', message: '播放器没有返回结果' };
-    } catch { return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'failed', message: '无法连接到播放器' }; }
+      return result ?? { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'failed', message: 'The media player returned no result' };
+    } catch { return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'failed', message: 'Could not connect to the media player' }; }
   }
 }
 
@@ -156,7 +156,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
   }
   if (message.type === 'GET_STATE') {
     void refreshTabs()
-      .catch((error: unknown) => { lastError = error instanceof Error ? error.message : '无法刷新媒体标签页'; })
+      .catch((error: unknown) => { lastError = error instanceof Error ? error.message : 'Could not refresh media tabs'; })
       .then(() => new Promise<void>((resolve) => setTimeout(resolve, 100)))
       .then(commands)
       .then((registered) => sendResponse({ ...toPopupState(), commands: registered }));
@@ -165,7 +165,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
   if (message.type === 'REFRESH') {
     void refreshTabs()
       .then(() => sendResponse({ ok: true }))
-      .catch((error: unknown) => sendResponse({ ok: false, message: error instanceof Error ? error.message : '无法刷新媒体标签页' }));
+      .catch((error: unknown) => sendResponse({ ok: false, message: error instanceof Error ? error.message : 'Could not refresh media tabs' }));
     return true;
   }
   if (message.type === 'SELECT_TARGET') {
@@ -184,6 +184,6 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
 
 chrome.commands.onCommand.addListener((name) => {
   const action = name as Action;
-  if (!['play', 'pause', 'toggle-playback', 'next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward'].includes(action)) return;
-  void queue({ type: 'COMMAND', requestId: createId('command'), action }).catch((error: unknown) => { lastError = error instanceof Error ? error.message : '控制失败'; });
+  if (!['play', 'pause', 'next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward'].includes(action)) return;
+  void queue({ type: 'COMMAND', requestId: createId('command'), action }).catch((error: unknown) => { lastError = error instanceof Error ? error.message : 'Media control failed'; });
 });

@@ -1,4 +1,4 @@
-type HookAction = 'play' | 'pause' | 'toggle-playback' | 'next-track' | 'previous-track' | 'volume-up' | 'volume-down' | 'seek-forward' | 'seek-backward';
+type HookAction = 'play' | 'pause' | 'next-track' | 'previous-track' | 'volume-up' | 'volume-down' | 'seek-forward' | 'seek-backward';
 
 const source = 'tabtune-page-hook';
 const mediaIds = new Map<HTMLMediaElement, string>();
@@ -97,23 +97,20 @@ function postState(): void {
 
 async function invoke(action: HookAction, amount?: number): Promise<void> {
   const item = currentMedia();
-  const sessionState = navigator.mediaSession?.playbackState;
-  const currentlyPlaying = handlers.size > 0 ? sessionState === 'playing' : Boolean(item && !item.paused);
-  const mediaAction: MediaSessionAction | undefined = action === 'next-track' ? 'nexttrack' : action === 'previous-track' ? 'previoustrack' : action === 'seek-forward' ? 'seekforward' : action === 'seek-backward' ? 'seekbackward' : action === 'play' ? 'play' : action === 'pause' ? 'pause' : action === 'toggle-playback' ? (currentlyPlaying ? 'pause' : 'play') : undefined;
-  if ((action === 'next-track' || action === 'previous-track' || action === 'play' || action === 'pause' || action === 'toggle-playback' || action === 'seek-forward' || action === 'seek-backward') && mediaAction && handlers.has(mediaAction)) {
+  const mediaAction: MediaSessionAction | undefined = action === 'next-track' ? 'nexttrack' : action === 'previous-track' ? 'previoustrack' : action === 'seek-forward' ? 'seekforward' : action === 'seek-backward' ? 'seekbackward' : action === 'play' ? 'play' : action === 'pause' ? 'pause' : undefined;
+  if ((action === 'next-track' || action === 'previous-track' || action === 'play' || action === 'pause' || action === 'seek-forward' || action === 'seek-backward') && mediaAction && handlers.has(mediaAction)) {
     await handlers.get(mediaAction)?.({ action: mediaAction, seekOffset: amount ?? 10 });
   } else if (action === 'next-track' || action === 'previous-track') {
     if (mediaAction && handlers.has(mediaAction)) await handlers.get(mediaAction)?.({ action: mediaAction, seekOffset: amount ?? 10 });
     else {
       const control = firstControl(action === 'next-track' ? nextSelectors : previousSelectors);
-      if (!control) throw new Error(action === 'next-track' ? '不存在下一项' : '不存在上一项');
+      if (!control) throw new Error(action === 'next-track' ? 'No next track control found' : 'No previous track control found');
       control.click();
     }
   } else if (!item) {
-    throw new Error('没有可控制的媒体');
+    throw new Error('No controllable media found');
   } else if (action === 'play') await item.play();
   else if (action === 'pause') item.pause();
-  else if (action === 'toggle-playback') { if (item.paused) await item.play(); else item.pause(); }
   else if (action === 'volume-up' || action === 'volume-down') {
     const delta = (amount ?? 0.05) * (action === 'volume-up' ? 1 : -1);
     if (!adjustVolume(delta)) item.volume = Math.min(1, Math.max(0, item.volume + delta));
@@ -129,7 +126,7 @@ window.addEventListener('message', (event) => {
   if (message.type !== 'COMMAND' || !message.requestId || !message.action) return;
   void invoke(message.action, message.amount)
     .then(() => post({ type: 'RESULT', requestId: message.requestId, status: 'ok' }))
-    .catch((error: unknown) => post({ type: 'RESULT', requestId: message.requestId, status: 'failed', message: error instanceof Error ? error.message : '控制失败' }));
+    .catch((error: unknown) => post({ type: 'RESULT', requestId: message.requestId, status: 'failed', message: error instanceof Error ? error.message : 'Media control failed' }));
 });
 
 function patchMediaSession(): void {

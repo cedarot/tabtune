@@ -10,17 +10,17 @@
     { "matches": ["http://*/*", "https://*/*"], "js": ["content/index.js"], "run_at": "document_start" }
   ],
   "background": { "service_worker": "background/index.js", "type": "module" },
-  "action": { "default_title": "TabTune", "default_popup": "popup/popup.html" },
+  "icons": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "action": { "default_title": "TabTune", "default_popup": "popup/popup.html", "default_icon": { "16": "icons/icon16.png", "32": "icons/icon32.png" } },
   "options_ui": { "page": "options/options.html", "open_in_tab": true },
   "commands": {
-    "toggle-playback": { "suggested_key": { "default": "Ctrl+Shift+7", "mac": "Command+Shift+7" }, "description": "播放／暂停当前媒体", "global": true },
-    "previous-track": { "suggested_key": { "default": "Ctrl+Shift+8", "mac": "Command+Shift+8" }, "description": "上一首／上一项", "global": true },
-    "next-track": { "suggested_key": { "default": "Ctrl+Shift+9", "mac": "Command+Shift+9" }, "description": "下一首／下一项", "global": true },
-    "volume-up": { "suggested_key": { "default": "Ctrl+Shift+0", "mac": "Command+Shift+0" }, "description": "音量增加", "global": true },
-    "play": { "description": "播放", "global": true },
-    "pause": { "description": "暂停", "global": true },
-    "volume-down": { "description": "音量减少", "global": true },
-    "seek-forward": { "description": "快进", "global": true },
-    "seek-backward": { "description": "快退", "global": true }
+    "play": { "suggested_key": { "default": "Ctrl+Shift+7", "mac": "Command+Shift+7" }, "description": "Play", "global": true },
+    "pause": { "suggested_key": { "default": "Ctrl+Shift+8", "mac": "Command+Shift+8" }, "description": "Pause", "global": true },
+    "previous-track": { "suggested_key": { "default": "Ctrl+Shift+9", "mac": "Command+Shift+9" }, "description": "Previous track", "global": true },
+    "next-track": { "suggested_key": { "default": "Ctrl+Shift+0", "mac": "Command+Shift+0" }, "description": "Next track", "global": true },
+    "volume-up": { "description": "Increase volume", "global": true },
+    "volume-down": { "description": "Decrease volume", "global": true },
+    "seek-forward": { "description": "Seek forward 10 seconds", "global": true },
+    "seek-backward": { "description": "Seek backward 10 seconds", "global": true }
   }
 }

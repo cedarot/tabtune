@@ -13,32 +13,32 @@ function render(commands: chrome.commands.Command[]): void {
   for (const action of shortcutActions) {
     const row = document.createElement('div'); row.className = 'shortcut-row';
     const name = document.createElement('span'); name.className = 'shortcut-name'; name.textContent = shortcutLabels[action];
-    const value = document.createElement('span'); value.className = 'shortcut-value'; value.textContent = values.get(action) || '未设置';
+    const value = document.createElement('span'); value.className = 'shortcut-value'; value.textContent = values.get(action) || 'Not set';
     row.append(name, value); container.append(row);
   }
-  status.textContent = '快捷键状态已加载';
+  status.textContent = 'Shortcut status loaded';
 }
 
 async function load(): Promise<void> {
   try { render(await chrome.commands.getAll()); }
-  catch (error: unknown) { status.textContent = error instanceof Error ? `读取失败：${error.message}` : '读取失败'; }
+  catch (error: unknown) { status.textContent = error instanceof Error ? `Read failed: ${error.message}` : 'Read failed'; }
 }
 
 async function loadPermission(): Promise<void> {
   const granted = await chrome.permissions.contains({ origins });
   permissionButton.disabled = granted;
-  permissionButton.textContent = granted ? '网页访问已允许' : '允许控制网页媒体';
-  permissionStatus.textContent = granted ? 'TabTune 可以控制任意已授权网页中的媒体。' : '需要允许 HTTP 和 HTTPS 网页访问。';
+  permissionButton.textContent = granted ? 'Web access allowed' : 'Allow webpage media control';
+  permissionStatus.textContent = granted ? 'TabTune can control media in any permitted webpage.' : 'HTTP and HTTPS access is required.';
 }
 
 function openSettings(): void { void chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }); }
 $('button#open').onclick = openSettings;
 permissionButton.onclick = () => {
   void chrome.permissions.request({ origins }).then(async (granted) => {
-    if (!granted) { permissionStatus.textContent = 'Chrome 未授予网页访问权限。'; return; }
-    permissionStatus.textContent = '网页访问已允许，正在刷新…';
+    if (!granted) { permissionStatus.textContent = 'Chrome did not grant webpage access.'; return; }
+    permissionStatus.textContent = 'Web access granted; refreshing…';
     await chrome.runtime.sendMessage({ type: 'REFRESH' }).catch(() => undefined);
     await loadPermission();
-  }).catch((error: unknown) => { permissionStatus.textContent = error instanceof Error ? `权限请求失败：${error.message}` : '权限请求失败'; });
+  }).catch((error: unknown) => { permissionStatus.textContent = error instanceof Error ? `Permission request failed: ${error.message}` : 'Permission request failed'; });
 };
 void Promise.all([load(), loadPermission()]);

@@ -89,7 +89,7 @@ async function report(): Promise<void> {
 
 function executePageCommand(request: CommandRequest): Promise<CommandResult> {
   return new Promise((resolve) => {
-    const timer = setTimeout(() => { pendingPageCommands.delete(request.requestId); resolve({ type: 'COMMAND_RESULT', requestId: request.requestId, status: 'timeout', message: '页面媒体没有返回结果' }); }, 1500);
+    const timer = setTimeout(() => { pendingPageCommands.delete(request.requestId); resolve({ type: 'COMMAND_RESULT', requestId: request.requestId, status: 'timeout', message: 'The page media controller did not respond' }); }, 1500);
     pendingPageCommands.set(request.requestId, { resolve, timer });
     window.postMessage({ source: 'tabtune-content', type: 'COMMAND', requestId: request.requestId, action: request.action, amount: request.amount }, '*');
   });
@@ -98,16 +98,15 @@ function executePageCommand(request: CommandRequest): Promise<CommandResult> {
 async function execute(action: Action, amount?: number): Promise<Partial<Candidate>> {
   if (pageState?.mediaId) {
     const result = await executePageCommand({ type: 'COMMAND', requestId: createId('command'), action, amount });
-    if (result.status !== 'ok') throw new Error(result.message ?? '页面媒体控制失败');
+    if (result.status !== 'ok') throw new Error(result.message ?? 'Page media control failed');
     return { ...pageState, capabilities: pageState.capabilities.filter((item): item is Capability => pageCapabilities.has(item as Capability)), mediaId: pageState.mediaId, controllable: true };
   }
   const item = findMedia();
-  if (!item) throw new Error('没有可控制的媒体');
+  if (!item) throw new Error('No controllable media found');
   media = item;
   if ((action === 'next-track' || action === 'previous-track') && adapter) await adapter.execute(action, amount);
   else if (action === 'play') await item.play();
   else if (action === 'pause') item.pause();
-  else if (action === 'toggle-playback') { if (item.paused) await item.play(); else item.pause(); }
   else if (action === 'volume-up' || action === 'volume-down') {
     const delta = (amount ?? 0.05) * (action === 'volume-up' ? 1 : -1);
     item.volume = Math.min(1, Math.max(0, item.volume + delta));
@@ -145,7 +144,7 @@ chrome.runtime.onMessage.addListener((message: CommandRequest | { type: 'PROBE' 
   if (message.type !== 'COMMAND') return;
   void execute(message.action, message.amount)
     .then((state): CommandResult => ({ type: 'COMMAND_RESULT', requestId: message.requestId, status: 'ok', state }))
-    .catch((error: unknown): CommandResult => ({ type: 'COMMAND_RESULT', requestId: message.requestId, status: error instanceof DOMException && error.name === 'NotAllowedError' ? 'autoplay-blocked' : 'failed', message: error instanceof Error ? error.message : '控制失败' }))
+    .catch((error: unknown): CommandResult => ({ type: 'COMMAND_RESULT', requestId: message.requestId, status: error instanceof DOMException && error.name === 'NotAllowedError' ? 'autoplay-blocked' : 'failed', message: error instanceof Error ? error.message : 'Media control failed' }))
     .then(sendResponse);
   return true;
 });
