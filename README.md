@@ -2,4 +2,38 @@
 
 Global keyboard controls for media playing across Chrome tabs.
 
-This repository is being developed from [REQ-001](https://github.com/cedarot/tabtune/issues/1).
+TabTune is currently distributed as an unpacked Manifest V3 Chrome extension. The build produces JavaScript, the manifest, popup assets, and source maps in `dist/`; it does not produce a CRX or Chrome Web Store package yet.
+
+## Build
+
+Requirements: Node.js 18+ and npm.
+
+```sh
+npm ci
+npm run lint
+npm run typecheck
+npm run test:unit
+npm run build
+npm run test:e2e
+```
+
+`npm run build` compiles the TypeScript service worker and shared modules, bundles the content script and popup entry points, and copies the static extension assets to `dist/`. The `dist/` directory is ignored by Git and can be regenerated at any time.
+
+## Install for local use
+
+1. Run `npm run build`.
+2. Open `chrome://extensions` in Chrome, enable Developer mode, and click **Load unpacked**.
+3. Select the repository's `dist/` directory.
+4. Open a YouTube, Bilibili, or other HTML media page. Click TabTune's **Allow control of web media** button when permission is requested.
+5. Open `chrome://extensions/shortcuts` and bind the commands you want. Four commands have suggested global shortcuts; the other five are available to bind manually.
+6. Open the TabTune popup to select or pin the target media tab. A paused target remains selected for the next Play command.
+
+The first permission button currently requests HTTP and HTTPS host access so TabTune can discover and control authorized pages. The extension keeps state locally and does not upload media metadata.
+
+## Controls
+
+The default suggested global shortcuts are `Ctrl+Shift+7` for play/pause, `Ctrl+Shift+8` for previous, `Ctrl+Shift+9` for next, and `Ctrl+Shift+0` for volume up. macOS uses the corresponding Command shortcuts. All nine commands can be rebound in Chrome's shortcut settings.
+
+YouTube and Bilibili provide playlist or collection next/previous controls when their current page exposes the matching player controls. Generic authorized HTML media supports play, pause, volume, and seek.
+
+This repository is being developed from [REQ-001](https://github.com/cedarot/tabtune/issues/1). Real-site and OS-level shortcut verification is tracked in [`docs/verification.md`](docs/verification.md).
