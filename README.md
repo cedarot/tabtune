@@ -25,7 +25,7 @@ npm run test:e2e
 2. Open `chrome://extensions` in Chrome, enable Developer mode, and click **Load unpacked**.
 3. Select the repository's `dist/` directory.
 4. Open a YouTube, Bilibili, or other HTML media page. Click TabTune's **Allow control of web media** button when permission is requested.
-5. Open `chrome://extensions/shortcuts` and bind the commands you want. Four commands have suggested global shortcuts; the other five are available to bind manually.
+5. Open the TabTune popup and choose **Set global shortcuts for each button**, or open `chrome://extensions/shortcuts` directly. Every control has its own command; four have suggested global shortcuts and the other five are available to bind manually.
 6. Open the TabTune popup to select or pin the target media tab. A paused target remains selected for the next Play command.
 
 The first permission button currently requests HTTP and HTTPS host access so TabTune can discover and control authorized pages. The extension keeps state locally and does not upload media metadata.

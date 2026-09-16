@@ -7,6 +7,7 @@
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "background": { "service_worker": "background/index.js", "type": "module" },
   "action": { "default_title": "TabTune", "default_popup": "popup/popup.html" },
+  "options_ui": { "page": "options/options.html", "open_in_tab": true },
   "commands": {
     "toggle-playback": { "suggested_key": { "default": "Ctrl+Shift+7", "mac": "Command+Shift+7" }, "description": "播放／暂停当前媒体", "global": true },
     "previous-track": { "suggested_key": { "default": "Ctrl+Shift+8", "mac": "Command+Shift+8" }, "description": "上一首／上一项", "global": true },

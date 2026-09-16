@@ -31,5 +31,6 @@ async function load(): Promise<void> { state = await chrome.runtime.sendMessage(
 
 document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => button.onclick = () => { void chrome.runtime.sendMessage(commandMessage(button.dataset.action as Parameters<typeof commandMessage>[0], state.target)); });
 $('button#refresh').onclick = () => { void load(); };
+$('button#shortcuts').onclick = () => { void chrome.runtime.openOptionsPage(); };
 $('button#permission').onclick = () => { void chrome.runtime.sendMessage({ type: 'REQUEST_PERMISSION', origins: ['http://*/*', 'https://*/*'] }).then(load); };
 void load();
