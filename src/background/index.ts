@@ -132,7 +132,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
     if (sender.tab?.id !== undefined && updateInteraction(store, sender.tab.id, sender.frameId ?? 0, message.mediaId, message.at)) void saveTarget();
     return;
   }
-  if (message.type === 'GET_STATE') { void commands().then((registered) => sendResponse({ ...toPopupState(), commands: registered })); return true; }
+  if (message.type === 'GET_STATE') { void refreshTabs().then(commands).then((registered) => sendResponse({ ...toPopupState(), commands: registered })); return true; }
   if (message.type === 'REFRESH') { void refreshTabs().then(() => sendResponse({ ok: true })); return true; }
   if (message.type === 'SELECT_TARGET') {
     const candidate = store.candidates.get(targetKey(message.target));
