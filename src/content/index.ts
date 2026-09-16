@@ -119,7 +119,7 @@ async function execute(action: Action, amount?: number): Promise<Partial<Candida
 }
 
 function interaction(): void {
-  void sendRuntimeMessage({ type: 'MEDIA_INTERACTION', mediaId, at: Date.now() });
+  void sendRuntimeMessage({ type: 'MEDIA_INTERACTION', mediaId: pageState?.mediaId ?? mediaId, at: Date.now() });
 }
 
 function attach(): void {

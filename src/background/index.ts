@@ -6,6 +6,7 @@ const store: TargetStore = { candidates: new Map() };
 let lastError: string | undefined;
 const queues = new Map<string, Promise<unknown>>();
 const refreshTimeoutMs = 1500;
+const targetDiscoveryWaitMs = 100;
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | undefined> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -106,12 +107,25 @@ function targetFor(request: CommandRequest): TargetRef | undefined {
   return chooseTarget(store);
 }
 
-async function execute(request: CommandRequest): Promise<CommandResult> {
+async function resolveTarget(request: CommandRequest): Promise<TargetRef | undefined> {
   let target = targetFor(request);
-  if (!target) {
-    await refreshTabs().catch(() => undefined);
+  const candidate = targetCandidate(store, target);
+  if (target && candidate?.controllable) return target;
+
+  // A cold service worker may need to inject the controller before the first
+  // shortcut can be delivered. Wait briefly for the resulting MEDIA_STATE
+  // message instead of requiring the user to press the shortcut twice.
+  await refreshTabs().catch(() => undefined);
+  for (let attempt = 0; attempt < 5; attempt += 1) {
     target = targetFor(request);
+    if (target && targetCandidate(store, target)?.controllable) return target;
+    await new Promise<void>((resolve) => setTimeout(resolve, targetDiscoveryWaitMs));
   }
+  return targetFor(request);
+}
+
+async function execute(request: CommandRequest): Promise<CommandResult> {
+  const target = await resolveTarget(request);
   if (!target) return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'target-gone', message: 'No controllable media found' };
   const candidate = targetCandidate(store, target);
   if (!candidate) return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'target-gone', message: 'The target tab is no longer available' };
