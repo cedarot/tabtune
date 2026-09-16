@@ -17,7 +17,7 @@ function render(): void {
   for (const candidate of state.candidates) {
     const row = document.createElement('div'); row.className = `candidate${selected(candidate) ? ' selected' : ''}`;
     const info = document.createElement('div'); info.className = 'candidate-info';
-    info.innerHTML = `<div class="candidate-title">${escapeHtml(candidate.title || '未命名媒体')}</div><div class="candidate-meta">${escapeHtml(candidate.hostname)} · ${candidate.paused ? '已暂停' : '正在播放'}${candidate.muted ? ' · 静音' : ''}</div>`;
+    info.innerHTML = `<div class="candidate-title">${escapeHtml(candidate.title || '未命名媒体')}</div><div class="candidate-meta">${escapeHtml(candidate.hostname)} · ${candidate.controllable ? (candidate.paused ? '已暂停' : '正在播放') : '需要网页授权'}${candidate.muted ? ' · 静音' : ''}</div>`;
     const select = document.createElement('button'); select.textContent = selected(candidate) ? '当前' : '选择'; select.ariaLabel = `选择 ${candidate.title || candidate.hostname}`; select.onclick = () => { void chrome.runtime.sendMessage({ type: 'SELECT_TARGET', target: toTarget(candidate), fixed: false }).then(load); };
     const fixed = document.createElement('button'); fixed.textContent = selected(candidate) && state.target?.mode === 'fixed' ? '解除固定' : '固定'; fixed.ariaLabel = `固定 ${candidate.title || candidate.hostname}`; fixed.onclick = () => { void chrome.runtime.sendMessage({ type: 'SELECT_TARGET', target: toTarget(candidate), fixed: !(selected(candidate) && state.target?.mode === 'fixed') }).then(load); };
     row.append(info, select, fixed); list.append(row);
@@ -29,7 +29,12 @@ function toTarget(candidate: Candidate): TargetRef { return { tabId: candidate.t
 function escapeHtml(value: string): string { const div = document.createElement('div'); div.textContent = value; return div.innerHTML; }
 async function load(): Promise<void> { state = await chrome.runtime.sendMessage({ type: 'GET_STATE' }) as PopupState; render(); }
 
-document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => button.onclick = () => { void chrome.runtime.sendMessage(commandMessage(button.dataset.action as Parameters<typeof commandMessage>[0], state.target)); });
+document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => button.onclick = () => {
+  void chrome.runtime.sendMessage(commandMessage(button.dataset.action as Parameters<typeof commandMessage>[0], state.target)).then((result: { status?: string; message?: string }) => {
+    if (result?.status && result.status !== 'ok') { $('p#status').textContent = result.message ?? '控制失败'; }
+    else { void load(); }
+  });
+});
 $('button#refresh').onclick = () => { void load(); };
 $('button#shortcuts').onclick = () => { void chrome.runtime.openOptionsPage(); };
 $('button#permission').onclick = () => { void chrome.runtime.sendMessage({ type: 'REQUEST_PERMISSION', origins: ['http://*/*', 'https://*/*'] }).then(load); };

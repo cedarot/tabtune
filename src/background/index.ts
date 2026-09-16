@@ -30,16 +30,39 @@ async function inject(tab: chrome.tabs.Tab): Promise<boolean> {
   } catch { return false; }
 }
 
+function placeholderFor(tab: chrome.tabs.Tab): Candidate | undefined {
+  if (tab.id === undefined || !tab.audible) return undefined;
+  let hostname = '网页';
+  try { hostname = new URL(tab.url ?? '').hostname || hostname; } catch { /* restricted tab */ }
+  return {
+    tabId: tab.id, frameId: 0, mediaId: `tab-${tab.id}`, title: tab.title || '正在发声的标签页', hostname,
+    audible: true, paused: false, muted: Boolean(tab.mutedInfo?.muted), volume: 0, duration: 0, currentTime: 0,
+    seekable: false, capabilities: [], controllable: false, lastInteractionAt: tab.lastAccessed ?? 0, updatedAt: Date.now(),
+    error: '需要授权才能控制此网页'
+  };
+}
+
+function ensurePlaceholder(tab: chrome.tabs.Tab): void {
+  const placeholder = placeholderFor(tab);
+  if (!placeholder) return;
+  const existing = [...store.candidates.values()].find((candidate) => candidate.tabId === tab.id && candidate.controllable);
+  if (!existing) upsertCandidate(store, placeholder);
+}
+
 async function refreshTabs(): Promise<void> {
   const tabs = await chrome.tabs.query({ windowType: 'normal' });
   for (const tab of tabs) {
     if (tab.id === undefined) continue;
+    ensurePlaceholder(tab);
     if (tab.audible) await inject(tab);
   }
 }
 
 function mergeState(sender: chrome.runtime.MessageSender, message: MediaStateMessage): void {
   if (sender.tab?.id === undefined) return;
+  for (const [key, existing] of store.candidates) {
+    if (existing.tabId === sender.tab.id && existing.frameId === (sender.frameId ?? 0) && !existing.controllable) store.candidates.delete(key);
+  }
   const candidate: Candidate = {
     ...message.state,
     tabId: sender.tab.id,
@@ -100,7 +123,7 @@ chrome.runtime.onStartup.addListener(() => {
   void chrome.storage.session.get('target').then((value) => { store.target = value.target as TargetRef | undefined; return refreshTabs(); });
 });
 chrome.tabs.onRemoved.addListener((tabId) => removeTab(store, tabId));
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { if (changeInfo.status === 'complete' || changeInfo.audible) void inject(tab); });
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { if (changeInfo.status === 'complete' || changeInfo.audible) { ensurePlaceholder(tab); void inject(tab); } });
 
 chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMessage | { type: 'MEDIA_INTERACTION'; mediaId: string; at: number }, sender, sendResponse) => {
   if (message.type === 'MEDIA_STATE') { mergeState(sender, message); return; }
