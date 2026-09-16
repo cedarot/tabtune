@@ -107,7 +107,11 @@ function targetFor(request: CommandRequest): TargetRef | undefined {
 }
 
 async function execute(request: CommandRequest): Promise<CommandResult> {
-  const target = targetFor(request);
+  let target = targetFor(request);
+  if (!target) {
+    await refreshTabs().catch(() => undefined);
+    target = targetFor(request);
+  }
   if (!target) return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'target-gone', message: '没有可控制的媒体' };
   const candidate = targetCandidate(store, target);
   if (!candidate) return { type: 'COMMAND_RESULT', requestId: request.requestId, status: 'target-gone', message: '目标标签页已失效' };
