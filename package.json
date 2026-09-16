@@ -1,0 +1,25 @@
+{
+  "name": "tabtune",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Global keyboard controls for media playing across Chrome tabs",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-static.mjs && node scripts/bundle.mjs",
+    "clean": "node scripts/clean.mjs",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:unit": "vitest run tests/unit",
+    "test:e2e": "vitest run tests/e2e"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.270",
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^9.17.0",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

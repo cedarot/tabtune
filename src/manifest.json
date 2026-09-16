@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "TabTune",
+  "version": "0.1.0",
+  "description": "Control media playing in Chrome tabs with global keyboard shortcuts.",
+  "permissions": ["tabs", "storage", "scripting"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "background": { "service_worker": "background/index.js", "type": "module" },
+  "action": { "default_title": "TabTune", "default_popup": "popup/popup.html" },
+  "commands": {
+    "toggle-playback": { "suggested_key": { "default": "Ctrl+Shift+7", "mac": "Command+Shift+7" }, "description": "播放／暂停当前媒体", "global": true },
+    "previous-track": { "suggested_key": { "default": "Ctrl+Shift+8", "mac": "Command+Shift+8" }, "description": "上一首／上一项", "global": true },
+    "next-track": { "suggested_key": { "default": "Ctrl+Shift+9", "mac": "Command+Shift+9" }, "description": "下一首／下一项", "global": true },
+    "volume-up": { "suggested_key": { "default": "Ctrl+Shift+0", "mac": "Command+Shift+0" }, "description": "音量增加", "global": true },
+    "play": { "description": "播放", "global": true },
+    "pause": { "description": "暂停", "global": true },
+    "volume-down": { "description": "音量减少", "global": true },
+    "seek-forward": { "description": "快进", "global": true },
+    "seek-backward": { "description": "快退", "global": true }
+  }
+}

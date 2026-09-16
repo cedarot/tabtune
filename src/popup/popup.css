@@ -1,0 +1,14 @@
+:root { color-scheme: light dark; font: 14px system-ui, sans-serif; }
+body { width: 360px; margin: 0; background: #f7f8fb; color: #172033; }
+main { padding: 14px; }
+header { display: flex; align-items: center; justify-content: space-between; }
+h1 { margin: 0; font-size: 20px; } h2 { font-size: 13px; color: #536078; margin: 14px 0 7px; }
+button { border: 1px solid #d5dbea; border-radius: 7px; background: white; color: inherit; padding: 7px 9px; cursor: pointer; }
+button:hover { border-color: #315efb; } button:disabled { cursor: not-allowed; opacity: .45; }
+#status { margin: 9px 0; color: #536078; min-height: 18px; }
+.candidate { display: flex; gap: 8px; align-items: center; padding: 8px; margin: 5px 0; border: 1px solid #dfe3ef; border-radius: 8px; background: white; }
+.candidate.selected { border-color: #315efb; box-shadow: 0 0 0 1px #315efb; } .candidate-info { flex: 1; min-width: 0; }
+.candidate-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .candidate-meta { color: #68738a; font-size: 12px; }
+.controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; } .secondary { width: 100%; margin-top: 12px; }
+.hint { color: #68738a; font-size: 12px; margin-bottom: 0; }
+@media (prefers-color-scheme: dark) { body { background: #20242d; color: #eef1f7; } button, .candidate { background: #2c323e; border-color: #454e60; } }
