@@ -86,7 +86,9 @@ async function invoke(action: HookAction, amount?: number): Promise<void> {
 
 window.addEventListener('message', (event) => {
   const message = event.data as { source?: string; type?: string; requestId?: string; action?: HookAction; amount?: number };
-  if (message?.source !== 'tabtune-content' || message.type !== 'COMMAND' || !message.requestId || !message.action) return;
+  if (message?.source !== 'tabtune-content') return;
+  if (message.type === 'REQUEST_STATE') { postState(); return; }
+  if (message.type !== 'COMMAND' || !message.requestId || !message.action) return;
   void invoke(message.action, message.amount)
     .then(() => post({ type: 'RESULT', requestId: message.requestId, status: 'ok' }))
     .catch((error: unknown) => post({ type: 'RESULT', requestId: message.requestId, status: 'failed', message: error instanceof Error ? error.message : '控制失败' }));

@@ -43,6 +43,7 @@ window.addEventListener('message', (event) => {
     pending.resolve({ type: 'COMMAND_RESULT', requestId: message.requestId, status: message.status ?? 'failed', message: message.message });
   }
 });
+window.postMessage({ source: 'tabtune-content', type: 'REQUEST_STATE' }, '*');
 
 function findMedia(): HTMLMediaElement | undefined {
   const elements = Array.from(document.querySelectorAll<HTMLMediaElement>('video, audio'));
