@@ -24,8 +24,8 @@ npm run test:e2e
 1. Run `npm run build`.
 2. Open `chrome://extensions` in Chrome, enable Developer mode, and click **Load unpacked**.
 3. Select the repository's `dist/` directory.
-4. Open any HTTP or HTTPS page with an HTML audio/video player. Open TabTune's **Extension options** from its Details page and click **Allow webpage media control** when permission is requested.
-5. Open `chrome://extensions/shortcuts` directly and assign each command. Play/Pause, Previous track, and Next track have suggested global shortcuts; the volume and seek controls are available to bind manually.
+4. Open any HTTP or HTTPS page with an HTML audio/video player. The extension requests HTTP/HTTPS host access during installation so its icon and content scripts can work on media pages.
+5. Open TabTune's **Extension options** from its Details page, then open `chrome://extensions/shortcuts` to assign each command. Play/Pause, Previous track, and Next track have suggested global shortcuts; the volume and seek controls are available to bind manually.
 6. Set each command to the **Global** scope. TabTune remembers the most recently interacted with media tab and sends commands to that tab, including when it is paused.
 
 The first permission button currently requests HTTP and HTTPS host access so TabTune can discover and control authorized pages. The extension keeps state locally and does not upload media metadata.
