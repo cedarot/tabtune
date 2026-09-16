@@ -5,6 +5,10 @@
   "description": "Control media playing in Chrome tabs with global keyboard shortcuts.",
   "permissions": ["tabs", "storage", "scripting"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "content_scripts": [
+    { "matches": ["http://*/*", "https://*/*"], "js": ["content/page-hook.js"], "run_at": "document_start", "world": "MAIN" },
+    { "matches": ["http://*/*", "https://*/*"], "js": ["content/index.js"], "run_at": "document_start" }
+  ],
   "background": { "service_worker": "background/index.js", "type": "module" },
   "action": { "default_title": "TabTune", "default_popup": "popup/popup.html" },
   "options_ui": { "page": "options/options.html", "open_in_tab": true },

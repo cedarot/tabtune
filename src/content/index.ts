@@ -1,10 +1,48 @@
-import type { Action, Candidate, CommandRequest, CommandResult, MediaStateMessage } from '../shared/types';
+import type { Action, Candidate, Capability, CommandRequest, CommandResult, MediaStateMessage } from '../shared/types';
 import { siteAdapter } from './adapters';
 
 const mediaId = crypto.randomUUID();
 const adapter = siteAdapter();
 let media: HTMLMediaElement | undefined;
 const attached = new WeakSet<HTMLMediaElement>();
+type PageState = { mediaId?: string; paused: boolean; audible: boolean; muted: boolean; volume: number; duration: number; currentTime: number; seekable: boolean; capabilities: string[]; title: string; hostname: string };
+const pageCapabilities = new Set<Capability>(['play', 'pause', 'next-track', 'previous-track', 'volume', 'seek']);
+let pageState: PageState | undefined;
+const pendingPageCommands = new Map<string, { resolve: (result: CommandResult) => void; timer: ReturnType<typeof setTimeout> }>();
+
+function reportPageState(): void {
+  if (!pageState?.mediaId) return;
+  const state: MediaStateMessage = {
+    type: 'MEDIA_STATE',
+    state: {
+      mediaId: pageState.mediaId, documentId: undefined, audible: pageState.audible, paused: pageState.paused,
+      muted: pageState.muted, volume: pageState.volume, duration: pageState.duration, currentTime: pageState.currentTime,
+      seekable: pageState.seekable, capabilities: pageState.capabilities.filter((item): item is Capability => pageCapabilities.has(item as Capability)),
+      controllable: true, lastInteractionAt: 0, updatedAt: Date.now()
+    },
+    title: pageState.title || document.title,
+    hostname: pageState.hostname || location.hostname
+  };
+  void chrome.runtime.sendMessage(state);
+}
+
+window.addEventListener('message', (event) => {
+  const message = event.data as { source?: string; type?: string; requestId?: string; status?: CommandResult['status']; message?: string; mediaId?: string; paused?: boolean; audible?: boolean; muted?: boolean; volume?: number; duration?: number; currentTime?: number; seekable?: boolean; capabilities?: string[]; title?: string; hostname?: string };
+  if (message?.source !== 'tabtune-page-hook') return;
+  if (message.type === 'STATE') {
+    pageState = {
+      mediaId: message.mediaId, paused: Boolean(message.paused), audible: Boolean(message.audible), muted: Boolean(message.muted),
+      volume: message.volume ?? 1, duration: message.duration ?? 0, currentTime: message.currentTime ?? 0, seekable: Boolean(message.seekable),
+      capabilities: message.capabilities ?? [], title: message.title ?? document.title, hostname: message.hostname ?? location.hostname
+    };
+    reportPageState();
+  } else if (message.type === 'RESULT' && message.requestId) {
+    const pending = pendingPageCommands.get(message.requestId);
+    if (!pending) return;
+    clearTimeout(pending.timer); pendingPageCommands.delete(message.requestId);
+    pending.resolve({ type: 'COMMAND_RESULT', requestId: message.requestId, status: message.status ?? 'failed', message: message.message });
+  }
+});
 
 function findMedia(): HTMLMediaElement | undefined {
   const elements = Array.from(document.querySelectorAll<HTMLMediaElement>('video, audio'));
@@ -37,11 +75,26 @@ function candidateState(): Omit<Candidate, 'tabId' | 'frameId' | 'title' | 'host
 }
 
 function report(): void {
+  if (pageState?.mediaId) { reportPageState(); return; }
+  if (!findMedia()) return;
   const state: MediaStateMessage = { type: 'MEDIA_STATE', state: candidateState(), title: document.title, hostname: location.hostname };
   void chrome.runtime.sendMessage(state);
 }
 
+function executePageCommand(request: CommandRequest): Promise<CommandResult> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => { pendingPageCommands.delete(request.requestId); resolve({ type: 'COMMAND_RESULT', requestId: request.requestId, status: 'timeout', message: '页面媒体没有返回结果' }); }, 1500);
+    pendingPageCommands.set(request.requestId, { resolve, timer });
+    window.postMessage({ source: 'tabtune-content', type: 'COMMAND', requestId: request.requestId, action: request.action, amount: request.amount }, '*');
+  });
+}
+
 async function execute(action: Action, amount?: number): Promise<Partial<Candidate>> {
+  if (pageState?.mediaId) {
+    const result = await executePageCommand({ type: 'COMMAND', requestId: crypto.randomUUID(), action, amount });
+    if (result.status !== 'ok') throw new Error(result.message ?? '页面媒体控制失败');
+    return { ...pageState, capabilities: pageState.capabilities.filter((item): item is Capability => pageCapabilities.has(item as Capability)), mediaId: pageState.mediaId, controllable: true };
+  }
   const item = findMedia();
   if (!item) throw new Error('没有可控制的媒体');
   media = item;

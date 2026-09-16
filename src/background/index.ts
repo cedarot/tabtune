@@ -29,6 +29,9 @@ async function inject(tab: chrome.tabs.Tab): Promise<boolean> {
     return true;
   } catch { /* content script is not loaded yet */ }
   try {
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/page-hook.js'], world: 'MAIN' });
+  } catch { /* the isolated controller can still handle regular DOM media */ }
+  try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/index.js'] });
     await chrome.tabs.sendMessage(tab.id, { type: 'PROBE' }, { frameId: 0 }).catch(() => undefined);
     return true;

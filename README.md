@@ -34,6 +34,6 @@ The first permission button currently requests HTTP and HTTPS host access so Tab
 
 The default suggested global shortcuts are `Ctrl+Shift+7` for play/pause, `Ctrl+Shift+8` for previous, `Ctrl+Shift+9` for next, and `Ctrl+Shift+0` for volume up. macOS uses the corresponding Command shortcuts. All nine commands can be rebound in Chrome's shortcut settings.
 
-TabTune detects HTML audio/video elements on any authorized HTTP/HTTPS page. Play, pause, volume, and seek use the media element directly. Previous/next uses matching visible player controls (including common ARIA labels) when the page exposes them; it does not depend on the site's domain.
+TabTune detects HTML audio/video elements on any authorized HTTP/HTTPS page, including players that create detached `new Audio()` elements. Play, pause, volume, and seek use the media element directly. Previous/next uses Media Session handlers or matching player controls (including common ARIA labels) when the page exposes them; it does not depend on the site's domain.
 
 This repository is being developed from [REQ-001](https://github.com/cedarot/tabtune/issues/1). Real-site and OS-level shortcut verification is tracked in [`docs/verification.md`](docs/verification.md).
