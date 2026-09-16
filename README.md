@@ -17,7 +17,7 @@ npm run build
 npm run test:e2e
 ```
 
-`npm run build` compiles the TypeScript service worker and shared modules, bundles the content script and popup entry points, and copies the static extension assets to `dist/`. The `dist/` directory is ignored by Git and can be regenerated at any time.
+`npm run build` compiles the TypeScript sources, bundles the background service worker and UI/content entry points into browser-loadable files, and copies the static extension assets to `dist/`. The `dist/` directory is ignored by Git and can be regenerated at any time.
 
 ## Install for local use
 
