@@ -64,6 +64,7 @@ export interface InteractionMessage { type: 'MEDIA_INTERACTION'; mediaId: string
 
 export type BackgroundMessage =
   | { type: 'GET_STATE' }
+  | { type: 'REFRESH' }
   | { type: 'SELECT_TARGET'; target: TargetRef; fixed: boolean }
   | { type: 'REQUEST_PERMISSION'; origins: string[] }
   | CommandRequest;

@@ -37,5 +37,13 @@ document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) =
 });
 $('button#refresh').onclick = () => { void load(); };
 $('button#shortcuts').onclick = () => { void chrome.runtime.openOptionsPage(); };
-$('button#permission').onclick = () => { void chrome.runtime.sendMessage({ type: 'REQUEST_PERMISSION', origins: ['http://*/*', 'https://*/*'] }).then(load); };
+$('button#permission').onclick = () => {
+  void chrome.permissions.request({ origins: ['http://*/*', 'https://*/*'] })
+    .then(async (granted) => {
+      if (!granted) { $('p#status').textContent = '需要网页访问权限才能控制媒体'; return; }
+      await chrome.runtime.sendMessage({ type: 'REFRESH' });
+      await load();
+    })
+    .catch(() => { $('p#status').textContent = '无法请求网页访问权限'; });
+};
 void load();

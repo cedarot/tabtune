@@ -124,6 +124,7 @@ chrome.runtime.onStartup.addListener(() => {
 });
 chrome.tabs.onRemoved.addListener((tabId) => removeTab(store, tabId));
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { if (changeInfo.status === 'complete' || changeInfo.audible) { ensurePlaceholder(tab); void inject(tab); } });
+chrome.permissions.onAdded.addListener(() => { void refreshTabs(); });
 
 chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMessage | { type: 'MEDIA_INTERACTION'; mediaId: string; at: number }, sender, sendResponse) => {
   if (message.type === 'MEDIA_STATE') { mergeState(sender, message); return; }
@@ -132,6 +133,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
     return;
   }
   if (message.type === 'GET_STATE') { void commands().then((registered) => sendResponse({ ...toPopupState(), commands: registered })); return true; }
+  if (message.type === 'REFRESH') { void refreshTabs().then(() => sendResponse({ ok: true })); return true; }
   if (message.type === 'SELECT_TARGET') {
     const candidate = store.candidates.get(targetKey(message.target));
     if (candidate) { selectCandidate(store, candidate, message.fixed ? 'fixed' : 'automatic'); void saveTarget(); }
