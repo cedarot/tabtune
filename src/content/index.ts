@@ -1,7 +1,8 @@
 import type { Action, Candidate, Capability, CommandRequest, CommandResult, MediaStateMessage } from '../shared/types';
+import { createId } from '../shared/id';
 import { siteAdapter } from './adapters';
 
-const mediaId = crypto.randomUUID();
+const mediaId = createId('media');
 const adapter = siteAdapter();
 let media: HTMLMediaElement | undefined;
 const attached = new WeakSet<HTMLMediaElement>();
@@ -92,7 +93,7 @@ function executePageCommand(request: CommandRequest): Promise<CommandResult> {
 
 async function execute(action: Action, amount?: number): Promise<Partial<Candidate>> {
   if (pageState?.mediaId) {
-    const result = await executePageCommand({ type: 'COMMAND', requestId: crypto.randomUUID(), action, amount });
+    const result = await executePageCommand({ type: 'COMMAND', requestId: createId('command'), action, amount });
     if (result.status !== 'ok') throw new Error(result.message ?? '页面媒体控制失败');
     return { ...pageState, capabilities: pageState.capabilities.filter((item): item is Capability => pageCapabilities.has(item as Capability)), mediaId: pageState.mediaId, controllable: true };
   }

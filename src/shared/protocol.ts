@@ -1,7 +1,8 @@
 import type { Action, BackgroundMessage, CommandResult, TargetRef } from './types';
+import { createId } from './id';
 
 export function commandMessage(action: Action, target?: TargetRef, amount?: number): BackgroundMessage {
-  return { type: 'COMMAND', requestId: crypto.randomUUID(), action, target, amount };
+  return { type: 'COMMAND', requestId: createId('command'), action, target, amount };
 }
 
 export function isCommandResult(value: unknown): value is CommandResult {

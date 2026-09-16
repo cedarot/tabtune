@@ -1,4 +1,5 @@
 import type { Action, BackgroundMessage, Candidate, CommandRequest, CommandResult, MediaStateMessage, PopupState, TargetRef } from '../shared/types';
+import { createId } from '../shared/id';
 import { chooseTarget, removeTab, selectCandidate, targetCandidate, targetKey, updateInteraction, upsertCandidate, type TargetStore } from './targets';
 
 const store: TargetStore = { candidates: new Map() };
@@ -180,5 +181,5 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
 chrome.commands.onCommand.addListener((name) => {
   const action = name as Action;
   if (!['play', 'pause', 'toggle-playback', 'next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward'].includes(action)) return;
-  void queue({ type: 'COMMAND', requestId: crypto.randomUUID(), action }).catch((error: unknown) => { lastError = error instanceof Error ? error.message : '控制失败'; });
+  void queue({ type: 'COMMAND', requestId: createId('command'), action }).catch((error: unknown) => { lastError = error instanceof Error ? error.message : '控制失败'; });
 });
