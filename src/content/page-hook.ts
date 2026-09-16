@@ -152,6 +152,18 @@ function patchMediaSession(): void {
       };
     } catch { /* some browsers expose read-only MediaSession methods */ }
   }
+  const playbackDescriptor = Object.getOwnPropertyDescriptor(prototype, 'playbackState');
+  if (playbackDescriptor?.set) {
+    try {
+      Object.defineProperty(prototype, 'playbackState', {
+        ...playbackDescriptor,
+        set(this: MediaSession, value: MediaSessionPlaybackState) {
+          playbackDescriptor.set?.call(this, value);
+          postState();
+        }
+      });
+    } catch { /* some browsers expose read-only MediaSession state */ }
+  }
   postState();
 }
 
@@ -170,3 +182,4 @@ window.Audio = function(src?: string) {
 for (const item of Array.from(document.querySelectorAll<HTMLMediaElement>('audio, video'))) track(item);
 patchMediaSession();
 postState();
+if (navigator.mediaSession) window.setInterval(postState, 1000);
