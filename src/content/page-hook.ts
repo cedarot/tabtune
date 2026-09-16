@@ -4,6 +4,8 @@ const source = 'tabtune-page-hook';
 const mediaIds = new Map<HTMLMediaElement, string>();
 const mediaItems: HTMLMediaElement[] = [];
 const handlers = new Map<MediaSessionAction, MediaSessionActionHandler>();
+const nextSelectors = ['.ytp-next-button', '.bpx-player-ctrl-next', '[aria-label*="Next" i]', '[title*="Next" i]', '[aria-label*="下一"]', '[title*="下一"]'];
+const previousSelectors = ['.ytp-prev-button', '.bpx-player-ctrl-prev', '[aria-label*="Previous" i]', '[title*="Previous" i]', '[aria-label*="上一"]', '[title*="上一"]'];
 let activeMedia: HTMLMediaElement | undefined;
 let nextMediaId = 1;
 let position: { duration: number; position: number; playbackRate?: number } | undefined;
@@ -30,6 +32,27 @@ function currentMedia(): HTMLMediaElement | undefined {
   return mediaItems.find((item) => !item.paused && !item.ended) ?? mediaItems.find((item) => !item.ended);
 }
 
+function firstControl(selectors: string[]): HTMLElement | undefined {
+  for (const selector of selectors) {
+    const element = document.querySelector<HTMLElement>(selector);
+    if (element) return element;
+  }
+  return undefined;
+}
+
+function adjustVolume(amount: number): boolean {
+  const control = document.querySelector<HTMLInputElement>('input.music-player-volume-slider, input[type="range"][aria-label*="volume" i], input[type="range"][aria-label*="音量"]');
+  if (!control) return false;
+  const min = Number(control.min || 0);
+  const max = Number(control.max || 1);
+  const step = Number(control.step || 0.05);
+  const value = Math.min(max, Math.max(min, Number(control.value || 0) + amount * (max - min)));
+  control.value = String(Math.round(value / step) * step);
+  control.dispatchEvent(new Event('input', { bubbles: true }));
+  control.dispatchEvent(new Event('change', { bubbles: true }));
+  return true;
+}
+
 function metadata(): { title?: string; artist?: string; album?: string } | undefined {
   const value = navigator.mediaSession?.metadata;
   if (!value) return undefined;
@@ -39,6 +62,7 @@ function metadata(): { title?: string; artist?: string; album?: string } | undef
 function capabilities(): string[] {
   const item = currentMedia();
   const result = item ? ['play', 'pause', 'volume', ...(item.seekable.length ? ['seek'] : [])] : [];
+  if (document.querySelector('input.music-player-volume-slider, input[type="range"][aria-label*="volume" i], input[type="range"][aria-label*="音量"]') && !result.includes('volume')) result.push('volume');
   if (handlers.has('nexttrack')) result.push('next-track');
   if (handlers.has('previoustrack')) result.push('previous-track');
   if (handlers.has('seekforward') || handlers.has('seekbackward')) {
@@ -72,14 +96,21 @@ async function invoke(action: HookAction, amount?: number): Promise<void> {
   if ((action === 'next-track' || action === 'previous-track' || action === 'play' || action === 'pause' || action === 'toggle-playback' || action === 'seek-forward' || action === 'seek-backward') && mediaAction && handlers.has(mediaAction) && !item) {
     await handlers.get(mediaAction)?.({ action: mediaAction, seekOffset: amount ?? 10 });
   } else if (action === 'next-track' || action === 'previous-track') {
-    if (!mediaAction || !handlers.has(mediaAction)) throw new Error(action === 'next-track' ? '不存在下一项' : '不存在上一项');
-    await handlers.get(mediaAction)?.({ action: mediaAction, seekOffset: amount ?? 10 });
+    if (mediaAction && handlers.has(mediaAction)) await handlers.get(mediaAction)?.({ action: mediaAction, seekOffset: amount ?? 10 });
+    else {
+      const control = firstControl(action === 'next-track' ? nextSelectors : previousSelectors);
+      if (!control) throw new Error(action === 'next-track' ? '不存在下一项' : '不存在上一项');
+      control.click();
+    }
   } else if (!item) {
     throw new Error('没有可控制的媒体');
   } else if (action === 'play') await item.play();
   else if (action === 'pause') item.pause();
   else if (action === 'toggle-playback') { if (item.paused) await item.play(); else item.pause(); }
-  else if (action === 'volume-up' || action === 'volume-down') item.volume = Math.min(1, Math.max(0, item.volume + (amount ?? 0.05) * (action === 'volume-up' ? 1 : -1)));
+  else if (action === 'volume-up' || action === 'volume-down') {
+    const delta = (amount ?? 0.05) * (action === 'volume-up' ? 1 : -1);
+    if (!adjustVolume(delta)) item.volume = Math.min(1, Math.max(0, item.volume + delta));
+  }
   else if (action === 'seek-forward' || action === 'seek-backward') item.currentTime = Math.min(item.duration || Number.MAX_SAFE_INTEGER, Math.max(0, item.currentTime + (amount ?? 10) * (action === 'seek-forward' ? 1 : -1)));
   postState();
 }
