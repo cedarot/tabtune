@@ -192,12 +192,12 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
     void chrome.permissions.request({ origins: message.origins }).then((granted) => { if (granted) void refreshTabs(); sendResponse({ granted }); });
     return true;
   }
-  if (message.type === 'COMMAND') { void queue(message).then((result) => { if (result.status !== 'ok') { lastError = result.message; void chrome.action.setBadgeText({ text: '!' }); } else { lastError = undefined; void chrome.action.setBadgeText({ text: '' }); } sendResponse(result); }); return true; }
+  if (message.type === 'COMMAND') { void queue(message).then((result) => { if (result.status !== 'ok') lastError = result.message; else lastError = undefined; sendResponse(result); }); return true; }
   return false;
 });
 
 chrome.commands.onCommand.addListener((name) => {
   const action = name as Action;
-  if (!['next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward'].includes(action)) return;
+  if (!['toggle-playback', 'next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward'].includes(action)) return;
   void queue({ type: 'COMMAND', requestId: createId('command'), action }).catch((error: unknown) => { lastError = error instanceof Error ? error.message : 'Media control failed'; });
 });

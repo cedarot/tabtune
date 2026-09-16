@@ -1,4 +1,4 @@
-type HookAction = 'play' | 'pause' | 'next-track' | 'previous-track' | 'volume-up' | 'volume-down' | 'seek-forward' | 'seek-backward';
+type HookAction = 'play' | 'pause' | 'toggle-playback' | 'next-track' | 'previous-track' | 'volume-up' | 'volume-down' | 'seek-forward' | 'seek-backward';
 
 const source = 'tabtune-page-hook';
 const mediaIds = new Map<HTMLMediaElement, string>();
@@ -97,20 +97,23 @@ function postState(): void {
 
 async function invoke(action: HookAction, amount?: number): Promise<void> {
   const item = currentMedia();
-  const mediaAction: MediaSessionAction | undefined = action === 'next-track' ? 'nexttrack' : action === 'previous-track' ? 'previoustrack' : action === 'seek-forward' ? 'seekforward' : action === 'seek-backward' ? 'seekbackward' : action === 'play' ? 'play' : action === 'pause' ? 'pause' : undefined;
-  if ((action === 'next-track' || action === 'previous-track' || action === 'play' || action === 'pause' || action === 'seek-forward' || action === 'seek-backward') && mediaAction && handlers.has(mediaAction)) {
+  const sessionState = navigator.mediaSession?.playbackState;
+  const currentlyPlaying = handlers.size > 0 ? sessionState === 'playing' : Boolean(item && !item.paused);
+  const effectiveAction = action === 'toggle-playback' ? (currentlyPlaying ? 'pause' : 'play') : action;
+  const mediaAction: MediaSessionAction | undefined = effectiveAction === 'next-track' ? 'nexttrack' : effectiveAction === 'previous-track' ? 'previoustrack' : effectiveAction === 'seek-forward' ? 'seekforward' : effectiveAction === 'seek-backward' ? 'seekbackward' : effectiveAction === 'play' ? 'play' : effectiveAction === 'pause' ? 'pause' : undefined;
+  if ((effectiveAction === 'next-track' || effectiveAction === 'previous-track' || effectiveAction === 'play' || effectiveAction === 'pause' || effectiveAction === 'seek-forward' || effectiveAction === 'seek-backward') && mediaAction && handlers.has(mediaAction)) {
     await handlers.get(mediaAction)?.({ action: mediaAction, seekOffset: amount ?? 10 });
-  } else if (action === 'next-track' || action === 'previous-track') {
+  } else if (effectiveAction === 'next-track' || effectiveAction === 'previous-track') {
     if (mediaAction && handlers.has(mediaAction)) await handlers.get(mediaAction)?.({ action: mediaAction, seekOffset: amount ?? 10 });
     else {
-      const control = firstControl(action === 'next-track' ? nextSelectors : previousSelectors);
-      if (!control) throw new Error(action === 'next-track' ? 'No next track control found' : 'No previous track control found');
+      const control = firstControl(effectiveAction === 'next-track' ? nextSelectors : previousSelectors);
+      if (!control) throw new Error(effectiveAction === 'next-track' ? 'No next track control found' : 'No previous track control found');
       control.click();
     }
   } else if (!item) {
     throw new Error('No controllable media found');
-  } else if (action === 'play') await item.play();
-  else if (action === 'pause') item.pause();
+  } else if (effectiveAction === 'play') await item.play();
+  else if (effectiveAction === 'pause') item.pause();
   else if (action === 'volume-up' || action === 'volume-down') {
     const delta = (amount ?? 0.05) * (action === 'volume-up' ? 1 : -1);
     if (!adjustVolume(delta)) item.volume = Math.min(1, Math.max(0, item.volume + delta));

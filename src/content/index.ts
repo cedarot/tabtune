@@ -107,6 +107,7 @@ async function execute(action: Action, amount?: number): Promise<Partial<Candida
   if ((action === 'next-track' || action === 'previous-track') && adapter) await adapter.execute(action, amount);
   else if (action === 'play') await item.play();
   else if (action === 'pause') item.pause();
+  else if (action === 'toggle-playback') { if (item.paused) await item.play(); else item.pause(); }
   else if (action === 'volume-up' || action === 'volume-down') {
     const delta = (amount ?? 0.05) * (action === 'volume-up' ? 1 : -1);
     item.volume = Math.min(1, Math.max(0, item.volume + delta));

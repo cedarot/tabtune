@@ -1,5 +1,5 @@
 export type Action =
-  | 'play' | 'pause'
+  | 'play' | 'pause' | 'toggle-playback'
   | 'next-track' | 'previous-track'
   | 'volume-up' | 'volume-down'
   | 'seek-forward' | 'seek-backward';
