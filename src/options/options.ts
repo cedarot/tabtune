@@ -4,6 +4,9 @@ const descriptions: Record<string, string> = {
 };
 
 const container = document.querySelector<HTMLDivElement>('#commands')!;
+const permissionButton = document.querySelector<HTMLButtonElement>('#permission')!;
+const permissionStatus = document.querySelector<HTMLParagraphElement>('#permission-status')!;
+const origins = ['http://*/*', 'https://*/*'];
 function openSettings(): void { void chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }); }
 function render(commands: chrome.commands.Command[]): void {
   container.replaceChildren();
@@ -19,5 +22,21 @@ function render(commands: chrome.commands.Command[]): void {
   }
 }
 async function load(): Promise<void> { render(await chrome.commands.getAll()); }
+async function loadPermission(): Promise<void> {
+  const granted = await chrome.permissions.contains({ origins });
+  permissionButton.disabled = granted;
+  permissionButton.textContent = granted ? '网页访问已允许' : '允许控制网页媒体';
+  permissionStatus.textContent = granted ? 'TabTune 可以注入控制脚本并发现网页媒体。' : '需要允许 HTTP 和 HTTPS 网页访问，才能控制 YouTube、Bilibili 和其他网页媒体。';
+}
+permissionButton.onclick = () => {
+  void chrome.permissions.request({ origins })
+    .then(async (granted) => {
+      if (!granted) { permissionStatus.textContent = 'Chrome 未授予网页访问权限。'; return; }
+      permissionStatus.textContent = '网页访问已允许，正在刷新媒体标签页…';
+      await chrome.runtime.sendMessage({ type: 'REFRESH' });
+      await loadPermission();
+    })
+    .catch((error: unknown) => { permissionStatus.textContent = error instanceof Error ? `Chrome 无法授予权限：${error.message}` : 'Chrome 无法授予网页访问权限。'; });
+};
 document.querySelector<HTMLButtonElement>('#open')!.onclick = openSettings;
-void load();
+void Promise.all([load(), loadPermission()]);
