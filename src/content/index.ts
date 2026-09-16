@@ -10,7 +10,7 @@ const pageCapabilities = new Set<Capability>(['play', 'pause', 'next-track', 'pr
 let pageState: PageState | undefined;
 const pendingPageCommands = new Map<string, { resolve: (result: CommandResult) => void; timer: ReturnType<typeof setTimeout> }>();
 
-function reportPageState(): void {
+async function reportPageState(): Promise<void> {
   if (!pageState?.mediaId) return;
   const state: MediaStateMessage = {
     type: 'MEDIA_STATE',
@@ -23,7 +23,7 @@ function reportPageState(): void {
     title: pageState.title || document.title,
     hostname: pageState.hostname || location.hostname
   };
-  void chrome.runtime.sendMessage(state);
+  await chrome.runtime.sendMessage(state).catch(() => undefined);
 }
 
 window.addEventListener('message', (event) => {
@@ -35,7 +35,7 @@ window.addEventListener('message', (event) => {
       volume: message.volume ?? 1, duration: message.duration ?? 0, currentTime: message.currentTime ?? 0, seekable: Boolean(message.seekable),
       capabilities: message.capabilities ?? [], title: message.title ?? document.title, hostname: message.hostname ?? location.hostname
     };
-    reportPageState();
+    void reportPageState();
   } else if (message.type === 'RESULT' && message.requestId) {
     const pending = pendingPageCommands.get(message.requestId);
     if (!pending) return;
@@ -75,11 +75,11 @@ function candidateState(): Omit<Candidate, 'tabId' | 'frameId' | 'title' | 'host
   };
 }
 
-function report(): void {
-  if (pageState?.mediaId) { reportPageState(); return; }
+async function report(): Promise<void> {
+  if (pageState?.mediaId) { await reportPageState(); return; }
   if (!findMedia()) return;
   const state: MediaStateMessage = { type: 'MEDIA_STATE', state: candidateState(), title: document.title, hostname: location.hostname };
-  void chrome.runtime.sendMessage(state);
+  await chrome.runtime.sendMessage(state).catch(() => undefined);
 }
 
 function executePageCommand(request: CommandRequest): Promise<CommandResult> {
@@ -110,7 +110,7 @@ async function execute(action: Action, amount?: number): Promise<Partial<Candida
     const delta = (amount ?? 10) * (action === 'seek-forward' ? 1 : -1);
     item.currentTime = Math.min(item.duration || Number.MAX_SAFE_INTEGER, Math.max(0, item.currentTime + delta));
   }
-  report();
+  void report();
   return candidateState();
 }
 
@@ -128,15 +128,15 @@ function attach(): void {
   for (const item of Array.from(document.querySelectorAll<HTMLMediaElement>('video, audio'))) attachMedia(item);
   const observer = new MutationObserver(() => {
     for (const item of Array.from(document.querySelectorAll<HTMLMediaElement>('video, audio'))) attachMedia(item);
-    report();
+    void report();
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
   document.addEventListener('click', (event) => { if ((event.target as Element | null)?.closest('video, audio, .ytp-play-button, .bpx-player-ctrl-play')) interaction(); }, { capture: true, passive: true });
-  report();
+  void report();
 }
 
 chrome.runtime.onMessage.addListener((message: CommandRequest | { type: 'PROBE' }, _sender, sendResponse) => {
-  if (message.type === 'PROBE') { report(); sendResponse({ ok: true }); return; }
+  if (message.type === 'PROBE') { void report().then(() => sendResponse({ ok: true })); return true; }
   if (message.type !== 'COMMAND') return;
   void execute(message.action, message.amount)
     .then((state): CommandResult => ({ type: 'COMMAND_RESULT', requestId: message.requestId, status: 'ok', state }))

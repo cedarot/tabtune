@@ -74,11 +74,14 @@ function capabilities(): string[] {
 function postState(): void {
   const item = currentMedia();
   const sessionState = navigator.mediaSession?.playbackState;
+  const sessionPlaying = sessionState === 'playing';
+  const useSessionState = handlers.size > 0 && sessionState !== undefined;
+  const paused = useSessionState ? !sessionPlaying : item?.paused ?? true;
   post({
     type: 'STATE',
     mediaId: item ? mediaIds.get(item) : handlers.size ? 'page-media-session' : undefined,
-    paused: item ? item.paused : sessionState !== 'playing',
-    audible: item ? !item.paused && !item.muted && item.volume > 0 : sessionState === 'playing',
+    paused,
+    audible: useSessionState ? sessionPlaying : Boolean(item && !item.paused && !item.muted && item.volume > 0),
     muted: item?.muted ?? false,
     volume: item?.volume ?? 1,
     duration: item?.duration ?? position?.duration ?? 0,
@@ -92,8 +95,10 @@ function postState(): void {
 
 async function invoke(action: HookAction, amount?: number): Promise<void> {
   const item = currentMedia();
-  const mediaAction: MediaSessionAction | undefined = action === 'next-track' ? 'nexttrack' : action === 'previous-track' ? 'previoustrack' : action === 'seek-forward' ? 'seekforward' : action === 'seek-backward' ? 'seekbackward' : action === 'play' ? 'play' : action === 'pause' ? 'pause' : action === 'toggle-playback' ? (item?.paused || navigator.mediaSession?.playbackState !== 'playing' ? 'play' : 'pause') : undefined;
-  if ((action === 'next-track' || action === 'previous-track' || action === 'play' || action === 'pause' || action === 'toggle-playback' || action === 'seek-forward' || action === 'seek-backward') && mediaAction && handlers.has(mediaAction) && !item) {
+  const sessionState = navigator.mediaSession?.playbackState;
+  const currentlyPlaying = handlers.size > 0 ? sessionState === 'playing' : Boolean(item && !item.paused);
+  const mediaAction: MediaSessionAction | undefined = action === 'next-track' ? 'nexttrack' : action === 'previous-track' ? 'previoustrack' : action === 'seek-forward' ? 'seekforward' : action === 'seek-backward' ? 'seekbackward' : action === 'play' ? 'play' : action === 'pause' ? 'pause' : action === 'toggle-playback' ? (currentlyPlaying ? 'pause' : 'play') : undefined;
+  if ((action === 'next-track' || action === 'previous-track' || action === 'play' || action === 'pause' || action === 'toggle-playback' || action === 'seek-forward' || action === 'seek-backward') && mediaAction && handlers.has(mediaAction)) {
     await handlers.get(mediaAction)?.({ action: mediaAction, seekOffset: amount ?? 10 });
   } else if (action === 'next-track' || action === 'previous-track') {
     if (mediaAction && handlers.has(mediaAction)) await handlers.get(mediaAction)?.({ action: mediaAction, seekOffset: amount ?? 10 });
@@ -130,18 +135,23 @@ function patchMediaSession(): void {
   if (!session) return;
   const prototype = Object.getPrototypeOf(session) as MediaSession;
   const originalSetActionHandler = prototype.setActionHandler;
-  prototype.setActionHandler = function(action, handler) {
-    if (handler) handlers.set(action, handler); else handlers.delete(action);
-    originalSetActionHandler.call(this, action, handler);
-    postState();
-  };
+  try {
+    prototype.setActionHandler = function(action, handler) {
+      if (handler) handlers.set(action, handler); else handlers.delete(action);
+      originalSetActionHandler.call(this, action, handler);
+      postState();
+    };
+  } catch { /* some browsers expose read-only MediaSession methods */ }
   const originalSetPositionState = prototype.setPositionState;
-  prototype.setPositionState = function(state) {
-    if (!state) return;
-    position = { duration: state.duration ?? 0, position: state.position ?? 0, playbackRate: state.playbackRate };
-    originalSetPositionState.call(this, state);
-    postState();
-  };
+  if (originalSetPositionState) {
+    try {
+      prototype.setPositionState = function(state) {
+        if (state) position = { duration: state.duration ?? 0, position: state.position ?? 0, playbackRate: state.playbackRate };
+        originalSetPositionState.call(this, state);
+        postState();
+      };
+    } catch { /* some browsers expose read-only MediaSession methods */ }
+  }
   postState();
 }
 

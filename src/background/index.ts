@@ -59,11 +59,11 @@ function ensurePlaceholder(tab: chrome.tabs.Tab): void {
 
 async function refreshTabs(): Promise<void> {
   const tabs = await chrome.tabs.query({ windowType: 'normal' });
-  for (const tab of tabs) {
-    if (tab.id === undefined) continue;
+  await Promise.all(tabs.map(async (tab) => {
+    if (tab.id === undefined) return;
     ensurePlaceholder(tab);
-    if (tab.audible) await inject(tab);
-  }
+    if (tab.audible) await inject(tab).catch(() => false);
+  }));
 }
 
 function mergeState(sender: chrome.runtime.MessageSender, message: MediaStateMessage): void {
@@ -140,8 +140,19 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
     if (sender.tab?.id !== undefined && updateInteraction(store, sender.tab.id, sender.frameId ?? 0, message.mediaId, message.at)) void saveTarget();
     return;
   }
-  if (message.type === 'GET_STATE') { void refreshTabs().then(commands).then((registered) => sendResponse({ ...toPopupState(), commands: registered })); return true; }
-  if (message.type === 'REFRESH') { void refreshTabs().then(() => sendResponse({ ok: true })); return true; }
+  if (message.type === 'GET_STATE') {
+    void refreshTabs()
+      .catch((error: unknown) => { lastError = error instanceof Error ? error.message : '无法刷新媒体标签页'; })
+      .then(commands)
+      .then((registered) => sendResponse({ ...toPopupState(), commands: registered }));
+    return true;
+  }
+  if (message.type === 'REFRESH') {
+    void refreshTabs()
+      .then(() => sendResponse({ ok: true }))
+      .catch((error: unknown) => sendResponse({ ok: false, message: error instanceof Error ? error.message : '无法刷新媒体标签页' }));
+    return true;
+  }
   if (message.type === 'SELECT_TARGET') {
     const candidate = store.candidates.get(targetKey(message.target));
     if (candidate) { selectCandidate(store, candidate, message.fixed ? 'fixed' : 'automatic'); void saveTarget(); }
