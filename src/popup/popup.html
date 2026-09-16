@@ -1,5 +1,5 @@
 <!doctype html>
 <html lang="zh-CN">
   <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>TabTune</title><link rel="stylesheet" href="popup.css"></head>
-  <body><main><header><h1>TabTune 快捷键</h1></header><p id="status" role="status">正在读取设置…</p><p class="hint">点击输入框后按下组合键即可保存。自定义快捷键会立即在 Chrome 网页中生效。</p><section id="shortcuts" aria-live="polite"></section><section class="access"><h2>网页访问权限</h2><p id="permission-status" class="hint">正在检查网页访问权限…</p><button id="permission">允许控制网页媒体</button></section><p class="hint">Chrome 的系统级全局快捷键由浏览器管理，扩展无法直接改写；Manifest 中的全局命令仍可在 Chrome 快捷键页面调整。</p></main><script type="module" src="popup.js"></script></body>
+  <body><main><header><h1>TabTune 全局快捷键</h1></header><p id="status" role="status">正在读取快捷键…</p><section id="shortcuts" aria-live="polite"></section><button id="open" class="primary">打开 Chrome 全局快捷键设置</button><section class="access"><h2>网页访问权限</h2><p id="permission-status" class="hint">正在检查网页访问权限…</p><button id="permission">允许控制网页媒体</button></section><p class="hint">在 Chrome 设置中为每个操作录入快捷键并选择全局范围；保存后可在其他标签页和应用中使用。</p></main><script type="module" src="popup.js"></script></body>
 </html>

@@ -1,6 +1,5 @@
 import type { Action, Candidate, Capability, CommandRequest, CommandResult, MediaStateMessage } from '../shared/types';
 import { createId } from '../shared/id';
-import { shortcutActions, shortcutFromKeyboardEvent, type ShortcutMap } from '../shared/shortcuts';
 import { siteAdapter } from './adapters';
 
 const mediaId = createId('media');
@@ -11,24 +10,6 @@ type PageState = { mediaId?: string; paused: boolean; audible: boolean; muted: b
 const pageCapabilities = new Set<Capability>(['play', 'pause', 'next-track', 'previous-track', 'volume', 'seek']);
 let pageState: PageState | undefined;
 const pendingPageCommands = new Map<string, { resolve: (result: CommandResult) => void; timer: ReturnType<typeof setTimeout> }>();
-let customShortcuts: ShortcutMap = {};
-
-function refreshShortcuts(): void {
-  void chrome.storage.sync.get('customShortcuts').then((value) => { customShortcuts = (value.customShortcuts ?? {}) as ShortcutMap; }).catch(() => undefined);
-}
-
-function handleCustomShortcut(event: KeyboardEvent): void {
-  if (event.defaultPrevented || event.repeat) return;
-  const element = event.target;
-  if (element instanceof Element && element.matches('input, textarea, select, [contenteditable="true"]')) return;
-  const pressed = shortcutFromKeyboardEvent(event);
-  if (!pressed) return;
-  const action = shortcutActions.find((candidate) => customShortcuts[candidate] === pressed);
-  if (!action) return;
-  event.preventDefault();
-  void chrome.runtime.sendMessage({ type: 'COMMAND', requestId: createId('command'), action });
-}
-
 async function reportPageState(): Promise<void> {
   if (!pageState?.mediaId) return;
   const state: MediaStateMessage = {
@@ -63,11 +44,6 @@ window.addEventListener('message', (event) => {
   }
 });
 window.postMessage({ source: 'tabtune-content', type: 'REQUEST_STATE' }, '*');
-refreshShortcuts();
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'sync' && changes.customShortcuts) refreshShortcuts();
-});
-document.addEventListener('keydown', handleCustomShortcut, { capture: true });
 
 function findMedia(): HTMLMediaElement | undefined {
   const elements = Array.from(document.querySelectorAll<HTMLMediaElement>('video, audio'));
