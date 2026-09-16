@@ -35,7 +35,11 @@ export function selectCandidate(store: TargetStore, candidate: Candidate, mode: 
 }
 
 export function chooseTarget(store: TargetStore): TargetRef | undefined {
-  if (store.target && store.candidates.has(targetKey(store.target))) return store.target;
+  if (store.target) {
+    const selected = store.candidates.get(targetKey(store.target));
+    if (selected?.controllable) return store.target;
+    store.target = undefined;
+  }
   const candidates = [...store.candidates.values()].filter((c) => c.controllable && (c.audible || !c.paused));
   candidates.sort((a, b) => b.lastInteractionAt - a.lastInteractionAt || b.updatedAt - a.updatedAt || a.tabId - b.tabId);
   const candidate = candidates[0];

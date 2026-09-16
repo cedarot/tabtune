@@ -33,4 +33,13 @@ describe('target selection', () => {
     expect(targetCandidate(store)?.mediaId).toBe('media-1'); expect(targetKey(item)).toBe('1:0:media-1');
     removeTab(store, 1); expect(store.target).toBeUndefined(); expect(store.candidates.size).toBe(0);
   });
+
+  it('drops an invalid selected target and falls back to controllable media', () => {
+    const store: TargetStore = { candidates: new Map() };
+    const stale = candidate({ controllable: false, audible: true });
+    const available = candidate({ tabId: 2, mediaId: 'media-2', lastInteractionAt: 2 });
+    upsertCandidate(store, stale); upsertCandidate(store, available); selectCandidate(store, stale, 'fixed');
+    expect(chooseTarget(store)?.tabId).toBe(2);
+    expect(store.target?.mode).toBe('automatic');
+  });
 });

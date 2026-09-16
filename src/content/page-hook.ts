@@ -95,8 +95,31 @@ function postState(): void {
   });
 }
 
+function trackSignature(): string {
+  const item = currentMedia();
+  const mediaMetadata = metadata();
+  return [
+    item ? mediaIds.get(item) : '',
+    item?.currentSrc || item?.src || '',
+    mediaMetadata?.title || '',
+    mediaMetadata?.artist || '',
+    document.title
+  ].join('|');
+}
+
+async function waitForTrackChange(before: string, action: 'next-track' | 'previous-track'): Promise<void> {
+  const deadline = Date.now() + 2000;
+  while (Date.now() < deadline) {
+    await new Promise<void>((resolve) => setTimeout(resolve, 100));
+    if (trackSignature() !== before) return;
+  }
+  throw new Error(action === 'next-track' ? 'No next track change detected' : 'No previous track change detected');
+}
+
 async function invoke(action: HookAction, amount?: number): Promise<void> {
   const item = currentMedia();
+  const trackAction = action === 'next-track' || action === 'previous-track' ? action : undefined;
+  const beforeTrack = trackAction ? trackSignature() : undefined;
   const sessionState = navigator.mediaSession?.playbackState;
   const currentlyPlaying = handlers.size > 0 ? sessionState === 'playing' : Boolean(item && !item.paused);
   const effectiveAction = action === 'toggle-playback' ? (currentlyPlaying ? 'pause' : 'play') : action;
@@ -119,6 +142,7 @@ async function invoke(action: HookAction, amount?: number): Promise<void> {
     if (!adjustVolume(delta)) item.volume = Math.min(1, Math.max(0, item.volume + delta));
   }
   else if (action === 'seek-forward' || action === 'seek-backward') item.currentTime = Math.min(item.duration || Number.MAX_SAFE_INTEGER, Math.max(0, item.currentTime + (amount ?? 10) * (action === 'seek-forward' ? 1 : -1)));
+  if (trackAction && beforeTrack) await waitForTrackChange(beforeTrack, trackAction);
   postState();
 }
 

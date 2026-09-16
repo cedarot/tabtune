@@ -7,5 +7,5 @@ h1 { font-size: 26px; } .intro, .hint { color: #536078; line-height: 1.6; }
 .name { flex: 1; font-weight: 600; } .shortcut { color: #315efb; font-weight: 600; } .shortcut.unset { color: #a85b00; }
 .shortcut { min-width: 150px; color: #315efb; font-weight: 600; } .shortcut.unset { color: #a85b00; }
 button { border: 1px solid #cbd3e5; border-radius: 7px; padding: 9px 13px; background: white; color: inherit; cursor: pointer; }
-button:hover { border-color: #315efb; } 
+button:hover { border-color: #315efb; }
 @media (prefers-color-scheme: dark) { body { background: #20242d; color: #eef1f7; } .command, .access, button { background: #2c323e; border-color: #454e60; } }

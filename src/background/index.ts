@@ -39,10 +39,10 @@ async function inject(tab: chrome.tabs.Tab): Promise<boolean> {
     return true;
   } catch { /* content script is not loaded yet */ }
   try {
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/page-hook.js'], world: 'MAIN' });
+    await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: ['content/page-hook.js'], world: 'MAIN' });
   } catch { /* the isolated controller can still handle regular DOM media */ }
   try {
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/index.js'] });
+    await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: ['content/index.js'] });
     await chrome.tabs.sendMessage(tab.id, { type: 'PROBE' }, { frameId: 0 }).catch(() => undefined);
     return true;
   } catch { return false; }
@@ -160,6 +160,10 @@ chrome.runtime.onStartup.addListener(() => {
 });
 chrome.tabs.onRemoved.addListener((tabId) => removeTab(store, tabId));
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { if (changeInfo.status === 'complete' || changeInfo.audible) { ensurePlaceholder(tab); void inject(tab); } });
+chrome.tabs.onReplaced.addListener((addedTabId, removedTabId) => {
+  removeTab(store, removedTabId);
+  void chrome.tabs.get(addedTabId).then((tab) => { ensurePlaceholder(tab); return inject(tab); }).catch(() => undefined);
+});
 chrome.permissions.onAdded.addListener(() => { void refreshTabs(); });
 
 chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMessage | { type: 'MEDIA_INTERACTION'; mediaId: string; at: number }, sender, sendResponse) => {
@@ -199,5 +203,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
 chrome.commands.onCommand.addListener((name) => {
   const action = name as Action;
   if (!['toggle-playback', 'next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward'].includes(action)) return;
-  void queue({ type: 'COMMAND', requestId: createId('command'), action }).catch((error: unknown) => { lastError = error instanceof Error ? error.message : 'Media control failed'; });
+  void queue({ type: 'COMMAND', requestId: createId('command'), action })
+    .then((result) => { lastError = result.status === 'ok' ? undefined : result.message ?? 'Media control failed'; })
+    .catch((error: unknown) => { lastError = error instanceof Error ? error.message : 'Media control failed'; });
 });

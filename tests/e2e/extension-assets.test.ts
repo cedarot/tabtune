@@ -9,8 +9,8 @@ describe('built extension contract', () => {
     for (const path of [manifest.background.service_worker, manifest.options_ui.page, 'content/index.js', 'content/page-hook.js']) expect(existsSync(`dist/${path}`)).toBe(true);
     expect(manifest.action).toBeUndefined();
     expect(manifest.content_scripts).toEqual(expect.arrayContaining([
-      expect.objectContaining({ js: ['content/page-hook.js'], world: 'MAIN', run_at: 'document_start' }),
-      expect.objectContaining({ js: ['content/index.js'], run_at: 'document_start' })
+      expect.objectContaining({ js: ['content/page-hook.js'], world: 'MAIN', run_at: 'document_start', all_frames: true }),
+      expect.objectContaining({ js: ['content/index.js'], run_at: 'document_start', all_frames: true })
     ]));
     expect(readFileSync(`dist/${manifest.background.service_worker}`, 'utf8')).not.toMatch(/^import\s/m);
     for (const name of ['toggle-playback', 'next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward']) expect(manifest.commands[name]?.global).toBe(true);
