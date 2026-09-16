@@ -70,7 +70,7 @@ async function refreshTabs(): Promise<void> {
   await Promise.all(tabs.map(async (tab) => {
     if (tab.id === undefined) return;
     ensurePlaceholder(tab);
-    if (tab.audible) await withTimeout(inject(tab).catch(() => false), refreshTimeoutMs);
+    await withTimeout(inject(tab).catch(() => false), refreshTimeoutMs);
   }));
 }
 
