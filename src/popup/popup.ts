@@ -29,7 +29,9 @@ function toTarget(candidate: Candidate): TargetRef { return { tabId: candidate.t
 function escapeHtml(value: string): string { const div = document.createElement('div'); div.textContent = value; return div.innerHTML; }
 async function load(): Promise<void> {
   try {
-    state = await chrome.runtime.sendMessage({ type: 'GET_STATE' }) as PopupState;
+    const response = chrome.runtime.sendMessage({ type: 'GET_STATE' }) as Promise<PopupState>;
+    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('后台响应超时，请在 chrome://extensions 重新加载 TabTune')), 4000));
+    state = await Promise.race([response, timeout]);
   } catch (error: unknown) {
     state = { candidates: [], commands: [], lastError: error instanceof Error ? `无法连接到 TabTune：${error.message}` : '无法连接到 TabTune' };
   }
