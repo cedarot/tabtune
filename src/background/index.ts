@@ -92,7 +92,8 @@ function mergeState(sender: chrome.runtime.MessageSender, message: MediaStateMes
 }
 
 function toPopupState(): PopupState {
-  return { candidates: [...store.candidates.values()].sort((a, b) => Number(b.audible) - Number(a.audible) || b.lastInteractionAt - a.lastInteractionAt || a.tabId - b.tabId), target: store.target, lastError, commands: [] };
+  const target = chooseTarget(store);
+  return { candidates: [...store.candidates.values()].sort((a, b) => Number(b.audible) - Number(a.audible) || b.lastInteractionAt - a.lastInteractionAt || a.tabId - b.tabId), target, lastError, commands: [] };
 }
 
 async function commands(): Promise<chrome.commands.Command[]> {
