@@ -25,7 +25,12 @@ async function canInject(url: string): Promise<boolean> {
 async function inject(tab: chrome.tabs.Tab): Promise<boolean> {
   if (tab.id === undefined || !tab.url || !(await canInject(tab.url))) return false;
   try {
+    await chrome.tabs.sendMessage(tab.id, { type: 'PROBE' }, { frameId: 0 });
+    return true;
+  } catch { /* content script is not loaded yet */ }
+  try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/index.js'] });
+    await chrome.tabs.sendMessage(tab.id, { type: 'PROBE' }, { frameId: 0 }).catch(() => undefined);
     return true;
   } catch { return false; }
 }
