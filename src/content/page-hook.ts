@@ -47,7 +47,9 @@ function adjustVolume(amount: number): boolean {
   const max = Number(control.max || 1);
   const step = Number(control.step || 0.05);
   const value = Math.min(max, Math.max(min, Number(control.value || 0) + amount * (max - min)));
-  control.value = String(Math.round(value / step) * step);
+  const next = String(Math.round(value / step) * step);
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+  if (setter) setter.call(control, next); else control.value = next;
   control.dispatchEvent(new Event('input', { bubbles: true }));
   control.dispatchEvent(new Event('change', { bubbles: true }));
   return true;
