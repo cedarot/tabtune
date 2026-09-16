@@ -27,7 +27,14 @@ function render(): void {
 
 function toTarget(candidate: Candidate): TargetRef { return { tabId: candidate.tabId, frameId: candidate.frameId, documentId: candidate.documentId, mediaId: candidate.mediaId, selectedAt: Date.now(), mode: 'automatic' }; }
 function escapeHtml(value: string): string { const div = document.createElement('div'); div.textContent = value; return div.innerHTML; }
-async function load(): Promise<void> { state = await chrome.runtime.sendMessage({ type: 'GET_STATE' }) as PopupState; render(); }
+async function load(): Promise<void> {
+  try {
+    state = await chrome.runtime.sendMessage({ type: 'GET_STATE' }) as PopupState;
+  } catch (error: unknown) {
+    state = { candidates: [], commands: [], lastError: error instanceof Error ? `无法连接到 TabTune：${error.message}` : '无法连接到 TabTune' };
+  }
+  render();
+}
 
 document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => button.onclick = () => {
   void chrome.runtime.sendMessage(commandMessage(button.dataset.action as Parameters<typeof commandMessage>[0], state.target)).then((result: { status?: string; message?: string }) => {
