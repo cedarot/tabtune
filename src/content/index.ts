@@ -19,8 +19,8 @@ function refreshShortcuts(): void {
 
 function handleCustomShortcut(event: KeyboardEvent): void {
   if (event.defaultPrevented || event.repeat) return;
-  const element = event.target as HTMLElement | null;
-  if (element?.matches('input, textarea, select, [contenteditable="true"]')) return;
+  const element = event.target;
+  if (element instanceof Element && element.matches('input, textarea, select, [contenteditable="true"]')) return;
   const pressed = shortcutFromKeyboardEvent(event);
   if (!pressed) return;
   const action = shortcutActions.find((candidate) => customShortcuts[candidate] === pressed);
