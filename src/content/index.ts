@@ -10,6 +10,11 @@ type PageState = { mediaId?: string; paused: boolean; audible: boolean; muted: b
 const pageCapabilities = new Set<Capability>(['play', 'pause', 'next-track', 'previous-track', 'volume', 'seek']);
 let pageState: PageState | undefined;
 const pendingPageCommands = new Map<string, { resolve: (result: CommandResult) => void; timer: ReturnType<typeof setTimeout> }>();
+
+async function sendRuntimeMessage(message: unknown): Promise<void> {
+  try { await chrome.runtime.sendMessage(message); } catch { /* extension reloads invalidate old content scripts */ }
+}
+
 async function reportPageState(): Promise<void> {
   if (!pageState?.mediaId) return;
   const state: MediaStateMessage = {
@@ -23,7 +28,7 @@ async function reportPageState(): Promise<void> {
     title: pageState.title || document.title,
     hostname: pageState.hostname || location.hostname
   };
-  await chrome.runtime.sendMessage(state).catch(() => undefined);
+  await sendRuntimeMessage(state);
 }
 
 window.addEventListener('message', (event) => {
@@ -79,7 +84,7 @@ async function report(): Promise<void> {
   if (pageState?.mediaId) { await reportPageState(); return; }
   if (!findMedia()) return;
   const state: MediaStateMessage = { type: 'MEDIA_STATE', state: candidateState(), title: document.title, hostname: location.hostname };
-  await chrome.runtime.sendMessage(state).catch(() => undefined);
+  await sendRuntimeMessage(state);
 }
 
 function executePageCommand(request: CommandRequest): Promise<CommandResult> {
@@ -115,7 +120,7 @@ async function execute(action: Action, amount?: number): Promise<Partial<Candida
 }
 
 function interaction(): void {
-  void chrome.runtime.sendMessage({ type: 'MEDIA_INTERACTION', mediaId, at: Date.now() });
+  void sendRuntimeMessage({ type: 'MEDIA_INTERACTION', mediaId, at: Date.now() });
 }
 
 function attach(): void {
