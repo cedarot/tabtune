@@ -4,6 +4,14 @@ import { chooseTarget, removeTab, selectCandidate, targetCandidate, targetKey, u
 const store: TargetStore = { candidates: new Map() };
 let lastError: string | undefined;
 const queues = new Map<string, Promise<unknown>>();
+const refreshTimeoutMs = 1500;
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | undefined> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<undefined>((resolve) => { timer = setTimeout(() => resolve(undefined), timeoutMs); });
+  try { return await Promise.race([promise, timeout]); }
+  finally { if (timer) clearTimeout(timer); }
+}
 
 async function saveTarget(): Promise<void> {
   await chrome.storage.session.set({ target: store.target });
@@ -62,7 +70,7 @@ async function refreshTabs(): Promise<void> {
   await Promise.all(tabs.map(async (tab) => {
     if (tab.id === undefined) return;
     ensurePlaceholder(tab);
-    if (tab.audible) await inject(tab).catch(() => false);
+    if (tab.audible) await withTimeout(inject(tab).catch(() => false), refreshTimeoutMs);
   }));
 }
 
@@ -143,6 +151,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
   if (message.type === 'GET_STATE') {
     void refreshTabs()
       .catch((error: unknown) => { lastError = error instanceof Error ? error.message : '无法刷新媒体标签页'; })
+      .then(() => new Promise<void>((resolve) => setTimeout(resolve, 100)))
       .then(commands)
       .then((registered) => sendResponse({ ...toPopupState(), commands: registered }));
     return true;
