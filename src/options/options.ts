@@ -3,6 +3,7 @@ import { shortcutActions, shortcutLabels } from '../shared/shortcuts';
 const container = document.querySelector<HTMLDivElement>('#commands')!;
 const permissionButton = document.querySelector<HTMLButtonElement>('#permission')!;
 const permissionStatus = document.querySelector<HTMLParagraphElement>('#permission-status')!;
+const errorStatus = document.querySelector<HTMLParagraphElement>('#error-status')!;
 const origins = ['http://*/*', 'https://*/*'];
 
 function render(commands: chrome.commands.Command[]): void {
@@ -16,7 +17,14 @@ function render(commands: chrome.commands.Command[]): void {
   }
 }
 
-async function load(): Promise<void> { render(await chrome.commands.getAll()); }
+async function load(): Promise<void> {
+  const [commands, state] = await Promise.all([
+    chrome.commands.getAll(),
+    chrome.runtime.sendMessage({ type: 'GET_STATE' }) as Promise<{ lastError?: string }>
+  ]);
+  render(commands);
+  errorStatus.textContent = state.lastError ? `Last command error: ${state.lastError}` : '';
+}
 async function loadPermission(): Promise<void> {
   const granted = await chrome.permissions.contains({ origins });
   permissionButton.disabled = granted;

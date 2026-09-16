@@ -19,6 +19,12 @@ async function saveTarget(): Promise<void> {
   await chrome.storage.session.set({ target: store.target });
 }
 
+async function saveLastError(message: string | undefined): Promise<void> {
+  lastError = message;
+  if (message) await chrome.storage.session.set({ lastError: message });
+  else await chrome.storage.session.remove('lastError');
+}
+
 function hostPattern(url: string): string | undefined {
   try {
     const parsed = new URL(url);
@@ -154,9 +160,9 @@ function queue(request: CommandRequest): Promise<CommandResult> {
   return current;
 }
 
-chrome.runtime.onInstalled.addListener(() => { void chrome.storage.session.remove('target'); void refreshTabs(); });
+chrome.runtime.onInstalled.addListener(() => { void chrome.storage.session.remove(['target', 'lastError']); void refreshTabs(); });
 chrome.runtime.onStartup.addListener(() => {
-  void chrome.storage.session.get('target').then((value) => { store.target = value.target as TargetRef | undefined; return refreshTabs(); });
+  void chrome.storage.session.get(['target', 'lastError']).then((value) => { store.target = value.target as TargetRef | undefined; lastError = value.lastError as string | undefined; return refreshTabs(); });
 });
 chrome.tabs.onRemoved.addListener((tabId) => removeTab(store, tabId));
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { if (changeInfo.status === 'complete' || changeInfo.audible) { ensurePlaceholder(tab); void inject(tab); } });
@@ -196,7 +202,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage | MediaStateMes
     void chrome.permissions.request({ origins: message.origins }).then((granted) => { if (granted) void refreshTabs(); sendResponse({ granted }); });
     return true;
   }
-  if (message.type === 'COMMAND') { void queue(message).then((result) => { if (result.status !== 'ok') lastError = result.message; else lastError = undefined; sendResponse(result); }); return true; }
+  if (message.type === 'COMMAND') { void queue(message).then((result) => { void saveLastError(result.status === 'ok' ? undefined : result.message ?? 'Media control failed').catch(() => undefined); sendResponse(result); }); return true; }
   return false;
 });
 
@@ -204,6 +210,6 @@ chrome.commands.onCommand.addListener((name) => {
   const action = name as Action;
   if (!['toggle-playback', 'next-track', 'previous-track', 'volume-up', 'volume-down', 'seek-forward', 'seek-backward'].includes(action)) return;
   void queue({ type: 'COMMAND', requestId: createId('command'), action })
-    .then((result) => { lastError = result.status === 'ok' ? undefined : result.message ?? 'Media control failed'; })
-    .catch((error: unknown) => { lastError = error instanceof Error ? error.message : 'Media control failed'; });
+    .then((result) => { void saveLastError(result.status === 'ok' ? undefined : result.message ?? 'Media control failed').catch(() => undefined); })
+    .catch((error: unknown) => { void saveLastError(error instanceof Error ? error.message : 'Media control failed').catch(() => undefined); });
 });
