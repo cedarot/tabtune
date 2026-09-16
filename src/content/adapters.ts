@@ -5,6 +5,17 @@ export interface Adapter {
   execute(action: Action, amount?: number): Promise<{ state: Partial<Candidate>; message?: string }>;
 }
 
+const nextSelectors = [
+  '.ytp-next-button', '.bpx-player-ctrl-next',
+  '[aria-label*="Next" i]', '[title*="Next" i]', '[aria-label*="下一"]', '[title*="下一"]',
+  '[aria-label*="Siguiente" i]', '[title*="Siguiente" i]'
+];
+const previousSelectors = [
+  '.ytp-prev-button', '.bpx-player-ctrl-prev',
+  '[aria-label*="Previous" i]', '[title*="Previous" i]', '[aria-label*="上一"]', '[title*="上一"]',
+  '[aria-label*="Anterior" i]', '[title*="Anterior" i]'
+];
+
 const first = (selectors: string[]): HTMLElement | undefined => {
   for (const selector of selectors) {
     const el = document.querySelector<HTMLElement>(selector);
@@ -14,21 +25,18 @@ const first = (selectors: string[]): HTMLElement | undefined => {
 };
 
 function clickNext(direction: 'next' | 'previous'): void {
-  const selectors = direction === 'next'
-    ? ['.ytp-next-button', 'button[aria-label*="Next"]', '.bpx-player-ctrl-next', '.bpx-player-ctrl-btn[aria-label*="下一"]']
-    : ['.ytp-prev-button', 'button[aria-label*="Previous"]', '.bpx-player-ctrl-prev', '.bpx-player-ctrl-btn[aria-label*="上一"]'];
+  const selectors = direction === 'next' ? nextSelectors : previousSelectors;
   const control = first(selectors);
   if (!control) throw new Error(direction === 'next' ? '不存在下一项' : '不存在上一项');
   control.click();
 }
 
-export function siteAdapter(): Adapter | undefined {
-  const host = location.hostname;
-  const isYouTube = host === 'youtube.com' || host.endsWith('.youtube.com');
-  const isBilibili = host === 'bilibili.com' || host.endsWith('.bilibili.com');
-  if (!isYouTube && !isBilibili) return undefined;
+export function siteAdapter(): Adapter {
+  const capabilities: Capability[] = [];
+  if (first(nextSelectors)) capabilities.push('next-track');
+  if (first(previousSelectors)) capabilities.push('previous-track');
   return {
-    capabilities: ['play', 'pause', 'next-track', 'previous-track', 'volume', 'seek'],
+    capabilities,
     async execute(action, _amount) {
       if (action === 'next-track') { clickNext('next'); return { state: {} }; }
       if (action === 'previous-track') { clickNext('previous'); return { state: {} }; }

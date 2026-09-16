@@ -24,7 +24,7 @@ npm run test:e2e
 1. Run `npm run build`.
 2. Open `chrome://extensions` in Chrome, enable Developer mode, and click **Load unpacked**.
 3. Select the repository's `dist/` directory.
-4. Open a YouTube, Bilibili, or other HTML media page. Click TabTune's **Allow control of web media** button when permission is requested.
+4. Open any HTTP or HTTPS page with an HTML audio/video player. Click TabTune's **Allow control of web media** button when permission is requested.
 5. Open the TabTune popup and choose **Set global shortcuts for each button**, or open `chrome://extensions/shortcuts` directly. Every control has its own command; four have suggested global shortcuts and the other five are available to bind manually.
 6. Open the TabTune popup to select or pin the target media tab. A paused target remains selected for the next Play command.
 
@@ -34,6 +34,6 @@ The first permission button currently requests HTTP and HTTPS host access so Tab
 
 The default suggested global shortcuts are `Ctrl+Shift+7` for play/pause, `Ctrl+Shift+8` for previous, `Ctrl+Shift+9` for next, and `Ctrl+Shift+0` for volume up. macOS uses the corresponding Command shortcuts. All nine commands can be rebound in Chrome's shortcut settings.
 
-YouTube and Bilibili provide playlist or collection next/previous controls when their current page exposes the matching player controls. Generic authorized HTML media supports play, pause, volume, and seek.
+TabTune detects HTML audio/video elements on any authorized HTTP/HTTPS page. Play, pause, volume, and seek use the media element directly. Previous/next uses matching visible player controls (including common ARIA labels) when the page exposes them; it does not depend on the site's domain.
 
 This repository is being developed from [REQ-001](https://github.com/cedarot/tabtune/issues/1). Real-site and OS-level shortcut verification is tracked in [`docs/verification.md`](docs/verification.md).

@@ -26,7 +26,7 @@ async function loadPermission(): Promise<void> {
   const granted = await chrome.permissions.contains({ origins });
   permissionButton.disabled = granted;
   permissionButton.textContent = granted ? '网页访问已允许' : '允许控制网页媒体';
-  permissionStatus.textContent = granted ? 'TabTune 可以注入控制脚本并发现网页媒体。' : '需要允许 HTTP 和 HTTPS 网页访问，才能控制 YouTube、Bilibili 和其他网页媒体。';
+  permissionStatus.textContent = granted ? 'TabTune 可以注入控制脚本并发现网页媒体。' : '需要允许 HTTP 和 HTTPS 网页访问，才能控制任意网页中的音频和视频。';
 }
 permissionButton.onclick = () => {
   void chrome.permissions.request({ origins })
