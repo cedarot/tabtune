@@ -1,50 +1,58 @@
-import type { Candidate, PopupState, TargetRef } from '../shared/types';
-import { commandMessage } from '../shared/protocol';
+import { shortcutActions, shortcutFromKeyboardEvent, shortcutLabels, type ShortcutMap } from '../shared/shortcuts';
 
 const $ = <T extends HTMLElement>(selector: string): T => document.querySelector<T>(selector)!;
-let state: PopupState = { candidates: [], commands: [] };
-
-function selected(candidate: Candidate): boolean {
-  return Boolean(state.target && state.target.tabId === candidate.tabId && state.target.frameId === candidate.frameId && state.target.mediaId === candidate.mediaId);
-}
+const container = $<HTMLElement>('#shortcuts');
+const status = $<HTMLParagraphElement>('#status');
+const permissionButton = $<HTMLButtonElement>('#permission');
+const permissionStatus = $<HTMLParagraphElement>('#permission-status');
+const origins = ['http://*/*', 'https://*/*'];
+let customShortcuts: ShortcutMap = {};
 
 function render(): void {
-  const target = $('section#target');
-  const current = state.target && state.candidates.find((candidate) => selected(candidate));
-  target.innerHTML = current ? `<div class="candidate selected"><div class="candidate-info"><div class="candidate-title">当前目标：${escapeHtml(current.title)}</div><div class="candidate-meta">${escapeHtml(current.hostname)} · ${current.paused ? '已暂停' : '播放中'}${state.target?.mode === 'fixed' ? ' · 已固定' : ''}</div></div></div>` : '<div class="candidate"><div class="candidate-info">尚未选择控制目标</div></div>';
-  const list = $('section#candidates');
-  list.innerHTML = '';
-  for (const candidate of state.candidates) {
-    const row = document.createElement('div'); row.className = `candidate${selected(candidate) ? ' selected' : ''}`;
-    const info = document.createElement('div'); info.className = 'candidate-info';
-    info.innerHTML = `<div class="candidate-title">${escapeHtml(candidate.title || '未命名媒体')}</div><div class="candidate-meta">${escapeHtml(candidate.hostname)} · ${candidate.controllable ? (candidate.paused ? '已暂停' : '正在播放') : '需要网页授权'}${candidate.muted ? ' · 静音' : ''}</div>`;
-    const select = document.createElement('button'); select.textContent = selected(candidate) ? '当前' : '选择'; select.ariaLabel = `选择 ${candidate.title || candidate.hostname}`; select.onclick = () => { void chrome.runtime.sendMessage({ type: 'SELECT_TARGET', target: toTarget(candidate), fixed: false }).then(load); };
-    const fixed = document.createElement('button'); fixed.textContent = selected(candidate) && state.target?.mode === 'fixed' ? '解除固定' : '固定'; fixed.ariaLabel = `固定 ${candidate.title || candidate.hostname}`; fixed.onclick = () => { void chrome.runtime.sendMessage({ type: 'SELECT_TARGET', target: toTarget(candidate), fixed: !(selected(candidate) && state.target?.mode === 'fixed') }).then(load); };
-    row.append(info, select, fixed); list.append(row);
+  container.replaceChildren();
+  for (const action of shortcutActions) {
+    const row = document.createElement('label'); row.className = 'shortcut-row';
+    const name = document.createElement('span'); name.className = 'shortcut-name'; name.textContent = shortcutLabels[action];
+    const input = document.createElement('input'); input.className = 'shortcut-input'; input.type = 'text'; input.readOnly = true; input.placeholder = '点击后按组合键'; input.value = customShortcuts[action] ?? '';
+    input.setAttribute('aria-label', `${shortcutLabels[action]}快捷键`);
+    input.onkeydown = (event) => {
+      event.preventDefault();
+      if (event.key === 'Escape' || event.key === 'Backspace' || event.key === 'Delete') {
+        delete customShortcuts[action]; input.value = ''; void save(); return;
+      }
+      const shortcut = shortcutFromKeyboardEvent(event);
+      if (!shortcut) { status.textContent = '请至少按下 Ctrl、Alt、Shift 或 Command 加一个按键。'; return; }
+      input.value = shortcut; customShortcuts[action] = shortcut; void save();
+    };
+    row.append(name, input); container.append(row);
   }
-  $('p#status').textContent = state.lastError ?? (state.candidates.length ? `${state.candidates.length} 个媒体标签页` : '没有检测到发声标签页');
 }
 
-function toTarget(candidate: Candidate): TargetRef { return { tabId: candidate.tabId, frameId: candidate.frameId, documentId: candidate.documentId, mediaId: candidate.mediaId, selectedAt: Date.now(), mode: 'automatic' }; }
-function escapeHtml(value: string): string { const div = document.createElement('div'); div.textContent = value; return div.innerHTML; }
+async function save(): Promise<void> {
+  try { await chrome.storage.sync.set({ customShortcuts }); status.textContent = '已保存'; }
+  catch (error: unknown) { status.textContent = error instanceof Error ? `保存失败：${error.message}` : '保存失败'; }
+}
+
 async function load(): Promise<void> {
-  try {
-    const response = chrome.runtime.sendMessage({ type: 'GET_STATE' }) as Promise<PopupState>;
-    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('后台响应超时，请在 chrome://extensions 重新加载 TabTune')), 4000));
-    state = await Promise.race([response, timeout]);
-  } catch (error: unknown) {
-    state = { candidates: [], commands: [], lastError: error instanceof Error ? `无法连接到 TabTune：${error.message}` : '无法连接到 TabTune' };
-  }
-  render();
+  const value = await chrome.storage.sync.get('customShortcuts');
+  customShortcuts = (value.customShortcuts ?? {}) as ShortcutMap;
+  render(); status.textContent = '设置已加载';
 }
 
-document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => button.onclick = () => {
-  void chrome.runtime.sendMessage(commandMessage(button.dataset.action as Parameters<typeof commandMessage>[0], state.target)).then((result: { status?: string; message?: string }) => {
-    if (result?.status && result.status !== 'ok') { $('p#status').textContent = result.message ?? '控制失败'; }
-    else { void load(); }
-  });
-});
-$('button#refresh').onclick = () => { void load(); };
-$('button#shortcuts').onclick = () => { void chrome.runtime.openOptionsPage(); };
-$('button#permission').onclick = () => { void chrome.runtime.openOptionsPage(); };
-void load();
+async function loadPermission(): Promise<void> {
+  const granted = await chrome.permissions.contains({ origins });
+  permissionButton.disabled = granted;
+  permissionButton.textContent = granted ? '网页访问已允许' : '允许控制网页媒体';
+  permissionStatus.textContent = granted ? 'TabTune 可以控制任意已授权网页中的媒体。' : '需要允许 HTTP 和 HTTPS 网页访问。';
+}
+
+permissionButton.onclick = () => {
+  void chrome.permissions.request({ origins }).then(async (granted) => {
+    if (!granted) { permissionStatus.textContent = 'Chrome 未授予网页访问权限。'; return; }
+    permissionStatus.textContent = '网页访问已允许，正在刷新…';
+    await chrome.runtime.sendMessage({ type: 'REFRESH' }).catch(() => undefined);
+    await loadPermission();
+  }).catch((error: unknown) => { permissionStatus.textContent = error instanceof Error ? `权限请求失败：${error.message}` : '权限请求失败'; });
+};
+
+void Promise.all([load(), loadPermission()]);
