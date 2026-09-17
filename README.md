@@ -15,6 +15,19 @@ You can leave YouTube, Bilibili, or another music site in the background and use
 
 TabTune runs locally. It does not upload page URLs, song information, or playback history.
 
+### Supported websites
+
+TabTune does not use a fixed website allowlist. It can work on any regular HTTP/HTTPS page that exposes a standard HTML5 `<audio>` or `<video>` element, or the browser Media Session controls.
+
+| Website or player type | Support |
+| --- | --- |
+| YouTube | Play/pause, volume, seek, and previous/next when the video has them |
+| Bilibili | Play/pause, volume, seek, and previous/next when the video has them |
+| Other HTML5 or Media Session players | The same basic controls; previous/next depends on the site |
+| Self-hosted or custom players, such as Feiniu Music | Works when the page exposes a standard media element, Media Session, or a controllable volume slider |
+
+The list is a guide rather than a guarantee. A website can change its player or page structure at any time.
+
 ### First-time setup
 
 1. Install [Node.js 18 or newer](https://nodejs.org/).
