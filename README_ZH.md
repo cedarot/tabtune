@@ -69,29 +69,6 @@ Chrome 扩展的全局快捷键需要在 Chrome 自己的页面中设置：
 
 macOS 会使用对应的 `Command` 组合键。Chrome 可能会显示一个叫 **Activate extension** 的内置项目；它不是 TabTune 的媒体控制命令，可以保持未设置。
 
-### 怎么选择控制目标
-
-TabTune 会记住最近一次明确操作过的媒体标签页。
-
-例如：
-
-1. 在音乐页面点击一次播放、暂停或音量控件。
-2. 切换到编辑器、其他标签页或其他应用。
-3. 按 TabTune 的全局快捷键。
-
-快捷键会继续控制刚才操作的页面。暂停后，TabTune 仍然会保留这个目标。如果有多个音乐页面，在想控制的页面上操作一次即可切换目标。
-
-### 图标是灰色怎么办
-
-如果 Chrome 显示 **Can't read or change site's data**：
-
-1. 打开 `chrome://extensions`。
-2. 点击 TabTune 的 **Details**。
-3. 在 **Site access** 中选择 **On all sites**。
-4. 刷新音乐网页。
-
-Chrome 内部页面（例如 `chrome://extensions`）、Chrome Web Store 页面和部分受保护页面不能被扩展控制，这是浏览器的限制。
-
 ### 常见问题
 
 常见问题请查看 [FAQ.md](FAQ.md)。里面包含快捷键、权限、媒体识别、音量和上一首／下一首等问题的处理方法。

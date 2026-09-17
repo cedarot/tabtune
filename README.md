@@ -69,29 +69,6 @@ The current commands are:
 
 On macOS, use the matching `Command` combination. Chrome may also show a built-in **Activate extension** entry; it is not a TabTune media command and can remain unset.
 
-### Choose the media tab to control
-
-TabTune remembers the media tab you interacted with most recently.
-
-For example:
-
-1. Click play, pause, or a volume control on a music page.
-2. Switch to your editor, another tab, or another app.
-3. Press a TabTune Global shortcut.
-
-The shortcut keeps controlling the page you just used. TabTune keeps the target after pausing. To switch between multiple music pages, interact with the page you want to control once.
-
-### If the icon is gray
-
-If Chrome shows **Can't read or change site's data**:
-
-1. Open `chrome://extensions`.
-2. Click TabTune **Details**.
-3. Under **Site access**, choose **On all sites**.
-4. Refresh the music page.
-
-Chrome internal pages such as `chrome://extensions`, the Chrome Web Store, and some protected pages cannot be controlled by extensions. This is a browser restriction.
-
 ### Frequently asked questions
 
 See [FAQ.md](FAQ.md) for answers about shortcuts, permissions, media detection, volume, and previous/next track controls.
