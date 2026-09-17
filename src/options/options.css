@@ -1,0 +1,11 @@
+:root { color-scheme: light dark; font: 15px system-ui, sans-serif; }
+body { margin: 0; background: #f7f8fb; color: #172033; }
+main { max-width: 760px; margin: 32px auto; padding: 0 24px 32px; }
+h1 { font-size: 26px; } .intro, .hint { color: #536078; line-height: 1.6; } .error { color: #b42318; line-height: 1.5; }
+.access { padding: 14px; margin: 18px 0; background: white; border: 1px solid #dfe3ef; border-radius: 10px; } .access h2 { margin-top: 0; }
+.command { display: flex; align-items: center; gap: 16px; padding: 14px; margin: 8px 0; background: white; border: 1px solid #dfe3ef; border-radius: 10px; }
+.name { flex: 1; font-weight: 600; } .shortcut { color: #315efb; font-weight: 600; } .shortcut.unset { color: #a85b00; }
+.shortcut { min-width: 150px; color: #315efb; font-weight: 600; } .shortcut.unset { color: #a85b00; }
+button { border: 1px solid #cbd3e5; border-radius: 7px; padding: 9px 13px; background: white; color: inherit; cursor: pointer; }
+button:hover { border-color: #315efb; }
+@media (prefers-color-scheme: dark) { body { background: #20242d; color: #eef1f7; } .command, .access, button { background: #2c323e; border-color: #454e60; } }

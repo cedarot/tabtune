@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "TabTune",
+  "version": "0.1.0",
+  "description": "Control media playing in Chrome tabs with global keyboard shortcuts.",
+  "permissions": ["tabs", "storage", "scripting"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "content_scripts": [
+    { "matches": ["http://*/*", "https://*/*"], "js": ["content/page-hook.js"], "run_at": "document_start", "world": "MAIN", "all_frames": true },
+    { "matches": ["http://*/*", "https://*/*"], "js": ["content/index.js"], "run_at": "document_start", "all_frames": true }
+  ],
+  "background": { "service_worker": "background/index.js", "type": "module" },
+  "icons": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "action": { "default_title": "TabTune", "default_popup": "popup/popup.html", "default_icon": { "16": "icons/icon16.png", "32": "icons/icon32.png" } },
+  "options_ui": { "page": "options/options.html", "open_in_tab": true },
+  "commands": {
+    "toggle-playback": { "suggested_key": { "default": "Ctrl+Shift+7", "mac": "Command+Shift+7" }, "description": "Play/Pause", "global": true },
+    "previous-track": { "suggested_key": { "default": "Ctrl+Shift+8", "mac": "Command+Shift+8" }, "description": "Previous track", "global": true },
+    "next-track": { "suggested_key": { "default": "Ctrl+Shift+9", "mac": "Command+Shift+9" }, "description": "Next track", "global": true },
+    "volume-up": { "description": "Increase volume", "global": true },
+    "volume-down": { "description": "Decrease volume", "global": true },
+    "seek-forward": { "description": "Seek forward 10 seconds", "global": true },
+    "seek-backward": { "description": "Seek backward 10 seconds", "global": true }
+  }
+}
