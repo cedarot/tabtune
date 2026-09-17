@@ -95,36 +95,3 @@ Chrome 内部页面（例如 `chrome://extensions`）、Chrome Web Store 页面�
 ### 常见问题
 
 常见问题请查看 [FAQ.md](FAQ.md)。里面包含快捷键、权限、媒体识别、音量和上一首／下一首等问题的处理方法。
-
-### 开发者命令
-
-```sh
-npm ci                 # 安装依赖
-npm run lint           # 检查代码格式
-npm run typecheck      # 检查 TypeScript 类型
-npm run test:unit      # 运行单元测试
-npm run test:e2e       # 运行 E2E 测试
-npm run build          # 构建可加载的扩展
-```
-
-### 当前限制
-
-- 目前提供的是 Chrome 的未打包扩展，需要使用 **Load unpacked** 安装。
-- 只处理普通窗口中的 HTTP/HTTPS 网页媒体。
-- 不修改系统总音量。
-- 不控制 Chrome 内部页面、其他浏览器或其他 Chrome 用户配置。
-- 网站页面结构变化，可能会影响上一首／下一首控制。
-- 全局快捷键还可能受到操作系统和桌面环境的快捷键冲突影响。
-
-### 项目目录
-
-```text
-src/manifest.json          Chrome 扩展配置
-src/background/            后台服务和目标标签页管理
-src/content/               网页媒体检测和控制
-src/options/               设置页面
-src/popup/                 扩展图标弹窗
-src/icons/                 TabTune 图标
-src/shared/                类型和消息定义
-tests/                     自动化测试
-```

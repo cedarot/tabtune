@@ -95,36 +95,3 @@ Chrome internal pages such as `chrome://extensions`, the Chrome Web Store, and s
 ### Frequently asked questions
 
 See [FAQ.md](FAQ.md) for answers about shortcuts, permissions, media detection, volume, and previous/next track controls.
-
-### Developer commands
-
-```sh
-npm ci                 # install dependencies
-npm run lint           # check formatting and lint rules
-npm run typecheck      # check TypeScript types
-npm run test:unit      # run unit tests
-npm run test:e2e       # run E2E tests
-npm run build          # build the unpacked extension
-```
-
-### Current limitations
-
-- This is currently an unpacked Chrome extension loaded with **Load unpacked**.
-- It handles media in regular HTTP/HTTPS pages in normal browser windows.
-- It does not change the operating system's master volume.
-- It cannot control Chrome internal pages, other browsers, or another Chrome profile.
-- Website layout changes may affect previous/next track controls.
-- Operating system and desktop shortcut conflicts can affect Global shortcuts.
-
-### Project layout
-
-```text
-src/manifest.json          Chrome extension manifest
-src/background/            service worker and media target management
-src/content/               media detection and page controls
-src/options/               settings page
-src/popup/                 extension popup
-src/icons/                 TabTune icons
-src/shared/                shared types and messages
-tests/                     automated tests
-```

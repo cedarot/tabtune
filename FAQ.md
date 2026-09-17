@@ -50,6 +50,15 @@ TabTune 调整的是网页播放器音量，不是系统总音量。某些网站
 
 这是 Chrome 为带有工具栏图标的扩展提供的内置快捷键项目，不是 TabTune 的媒体控制命令，可以保持 **Not set**。
 
+### 当前限制
+
+- 目前提供的是 Chrome 的未打包扩展，需要使用 **Load unpacked** 安装。
+- 只处理普通窗口中的 HTTP/HTTPS 网页媒体。
+- 不修改系统总音量。
+- 不控制 Chrome 内部页面、其他浏览器或其他 Chrome 用户配置。
+- 网站页面结构变化，可能会影响上一首／下一首控制。
+- 全局快捷键还可能受到操作系统和桌面环境的快捷键冲突影响。
+
 ### 如何更新扩展？
 
 在项目目录运行：
@@ -107,6 +116,15 @@ TabTune changes the web player's volume, not the system master volume. Some site
 ### Why is there an “Activate extension” entry in Chrome?
 
 Chrome adds this built-in shortcut entry for extensions with a toolbar icon. It is not a TabTune media command and can stay **Not set**.
+
+### Current limitations
+
+- This is currently an unpacked Chrome extension loaded with **Load unpacked**.
+- It handles media in regular HTTP/HTTPS pages in normal browser windows.
+- It does not change the operating system's master volume.
+- It cannot control Chrome internal pages, other browsers, or another Chrome profile.
+- Website layout changes may affect previous/next track controls.
+- Operating system and desktop shortcut conflicts can affect Global shortcuts.
 
 ### How do I update the extension?
 
