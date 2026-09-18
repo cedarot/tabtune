@@ -73,14 +73,14 @@ Chrome 扩展的全局快捷键需要在 Chrome 自己的页面中设置：
 | 操作 | 默认快捷键 |
 | --- | --- |
 | Play/Pause | `Ctrl+Shift+7` |
-| Previous track | `Ctrl+Shift+8` |
-| Next track | `Ctrl+Shift+9` |
+| Previous track | `Ctrl+Shift+Comma` |
+| Next track | `Ctrl+Shift+Period` |
 | Increase volume | 未设置 |
 | Decrease volume | 未设置 |
 | Seek forward | 未设置 |
 | Seek backward | 未设置 |
 
-macOS 会使用对应的 `Command` 组合键。Chrome 可能会显示一个叫 **Activate extension** 的内置项目；它不是 TabTune 的媒体控制命令，可以保持未设置。
+macOS 会使用对应的 `Command+Shift+Comma` 和 `Command+Shift+Period` 组合键。Chrome 可能会显示一个叫 **Activate extension** 的内置项目；它不是 TabTune 的媒体控制命令，可以保持未设置。最终快捷键由 Chrome 管理，安装或更新扩展后请确认范围仍然是 **Global**。
 
 ### 常见问题
 

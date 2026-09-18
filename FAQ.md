@@ -79,6 +79,8 @@ Open `chrome://extensions/shortcuts`, find TabTune, and make sure a shortcut is 
 
 Reopen the shortcuts page after editing to confirm that Chrome saved the change.
 
+The suggested macOS defaults for Previous track and Next track are `Command+Shift+Comma` and `Command+Shift+Period`. Chrome may display the punctuation keys by name; this is expected.
+
 ### Why does it stop working when I switch tabs or apps?
 
 The shortcut must use the **Global** scope. **In Chrome** only works in the current Chrome window, and **Not set** means that no shortcut is assigned.
