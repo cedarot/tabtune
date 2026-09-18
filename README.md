@@ -73,14 +73,14 @@ The current commands are:
 | Action | Default shortcut |
 | --- | --- |
 | Play/Pause | `Ctrl+Shift+7` |
-| Previous track | `Ctrl+Shift+8` |
-| Next track | `Ctrl+Shift+9` |
+| Previous track | `Ctrl+Shift+Comma` |
+| Next track | `Ctrl+Shift+Period` |
 | Increase volume | Not set |
 | Decrease volume | Not set |
 | Seek forward | Not set |
 | Seek backward | Not set |
 
-On macOS, use the matching `Command` combination. Chrome may also show a built-in **Activate extension** entry; it is not a TabTune media command and can remain unset.
+On macOS, the matching defaults are `Command+Shift+Comma` and `Command+Shift+Period`. Chrome may also show a built-in **Activate extension** entry; it is not a TabTune media command and can remain unset. Chrome owns the final shortcut assignment, so confirm the shortcut is set to **Global** after installing or updating the extension.
 
 ### Frequently asked questions
 

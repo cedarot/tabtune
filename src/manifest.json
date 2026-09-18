@@ -15,8 +15,8 @@
   "options_ui": { "page": "options/options.html", "open_in_tab": true },
   "commands": {
     "toggle-playback": { "suggested_key": { "default": "Ctrl+Shift+7", "mac": "Command+Shift+7" }, "description": "Play/Pause", "global": true },
-    "previous-track": { "suggested_key": { "default": "Ctrl+Shift+8", "mac": "Command+Shift+8" }, "description": "Previous track", "global": true },
-    "next-track": { "suggested_key": { "default": "Ctrl+Shift+9", "mac": "Command+Shift+9" }, "description": "Next track", "global": true },
+    "previous-track": { "suggested_key": { "default": "Ctrl+Shift+Comma", "mac": "Command+Shift+Comma" }, "description": "Previous track", "global": true },
+    "next-track": { "suggested_key": { "default": "Ctrl+Shift+Period", "mac": "Command+Shift+Period" }, "description": "Next track", "global": true },
     "volume-up": { "description": "Increase volume", "global": true },
     "volume-down": { "description": "Decrease volume", "global": true },
     "seek-forward": { "description": "Seek forward 10 seconds", "global": true },
